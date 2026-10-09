@@ -1,0 +1,106 @@
+{
+  "_source": "loyalty_profiles: POC Testing Data tab row 11 (Customer Profile A/B/C), copied verbatim. Profile A in the source has no name, salutation, date of birth or mobile number - left null on purpose. reservations: PoC seed bookings (NOT from Example Hotel) created so the Scenario Email Response Sample confirmation numbers (12312312312, 12345678910, 12345678909) and each reservation status branch of the cancellation flow can be demonstrated. Replace with real PMS reservation/detail calls when the Open API is connected.",
+  "loyalty_profiles": [
+    {
+      "profile": "A",
+      "name": null,
+      "salutation": null,
+      "date_of_birth": null,
+      "mobile": null,
+      "email": "charlie.white@gmail.com",
+      "postal_address": "114, High Street, London EC1A 1AA",
+      "company": "Google",
+      "last_stay": "Example Hotel London on 5 Dec 2025",
+      "source_of_enrolment": "via mobile app",
+      "passport": "A78965525",
+      "membership_number": "123412345678",
+      "tier": "Platinum",
+      "points_balance": 7500,
+      "points_expiry": [{"points": 6000, "expires": "2026-12-31"}, {"points": 1500, "expires": "2027-12-31"}]
+    },
+    {
+      "profile": "B",
+      "name": "Tan Wei Xuan",
+      "salutation": "Ms.",
+      "date_of_birth": "2000-02-09",
+      "mobile": "+88656932145",
+      "email": "wx.tan@gmail.com",
+      "postal_address": "4F., No. 10, Ln. 107, San Jun St., Shulin Dist., New Taipei City 238, Taiwan",
+      "company": null,
+      "last_stay": null,
+      "source_of_enrolment": "via website",
+      "passport": "A12336966",
+      "membership_number": "223422345569",
+      "tier": "Gold",
+      "points_balance": 1500,
+      "points_expiry": [{"points": 1500, "expires": "2027-12-31"}]
+    },
+    {
+      "profile": "C",
+      "name": "Mayathi A/P Kumar",
+      "salutation": "Mrs.",
+      "date_of_birth": "1975-10-27",
+      "mobile": "+60189523311",
+      "email": "mayathi1975@gmail.com",
+      "postal_address": "No. 56, Jalan Permai, Taman Perkasa, 56000 Kuala Lumpur, Malaysia",
+      "company": "Malaysia Airline",
+      "last_stay": "Seaview Resort, Penang",
+      "source_of_enrolment": "via mobile site",
+      "passport": "A88589969",
+      "membership_number": "987798775663",
+      "tier": "Diamond",
+      "points_balance": 13500,
+      "points_expiry": [{"points": 7700, "expires": "2026-12-31"}, {"points": 5800, "expires": "2027-12-31"}]
+    }
+  ],
+  "reservations": [
+    {
+      "confirmNum": "12312312312", "hotelCode": "PEN2", "status": "RESERVED",
+      "guest": {"title": "Ms.", "firstName": "Megan", "lastName": "Lim", "email": "megan.lim@example.com", "mobile": "+60123456789"},
+      "arrivalDate": "2026-10-10", "departureDate": "2026-10-13",
+      "rooms": [{"room_type": "Deluxe Room", "adults": 2, "children_ages": [5]}],
+      "ratePlan": "FLEX", "channel": "Direct", "packages": ["Room only"], "memberNo": null,
+      "specials": [], "comments": [], "seed": true
+    },
+    {
+      "confirmNum": "12345678910", "hotelCode": "SZX1", "status": "RESERVED",
+      "guest": {"title": null, "firstName": "Test", "lastName": "Kim", "email": "test.kim@example.com", "mobile": "+821012345678"},
+      "arrivalDate": "2027-01-15", "departureDate": "2027-01-18",
+      "rooms": [{"room_type": "Deluxe Room", "adults": 3, "children_ages": [null]}],
+      "ratePlan": "FLEX", "channel": "Direct", "packages": ["Breakfast for 3 adults", "Extra bed (complimentary)"], "memberNo": "223422345569",
+      "specials": [{"code": "RWB", "name": "Extra rollaway bed"}], "comments": [], "seed": true
+    },
+    {
+      "confirmNum": "12345678909", "hotelCode": "SZX1", "status": "RESERVED",
+      "guest": {"title": null, "firstName": "David", "lastName": "Peeters", "email": "david.peeters@example.com", "mobile": "+32470123456"},
+      "arrivalDate": "2026-07-23", "departureDate": "2026-07-26",
+      "rooms": [{"room_type": "Deluxe Room (Twin)", "adults": 2, "children_ages": []}],
+      "ratePlan": "FLEX", "channel": "Direct", "packages": ["Room only"], "memberNo": null,
+      "specials": [], "comments": [], "seed": true
+    },
+    {
+      "confirmNum": "11100000001", "hotelCode": "PEN1", "status": "IN_HOUSE",
+      "guest": {"title": "Mrs.", "firstName": "Mayathi", "lastName": "A/P Kumar", "email": "mayathi1975@gmail.com", "mobile": "+60189523311"},
+      "arrivalDate": "2026-09-26", "departureDate": "2026-09-30",
+      "rooms": [{"room_type": "Premier Wing Premier Deluxe Room", "adults": 2, "children_ages": []}],
+      "ratePlan": "FLEX", "channel": "Direct", "packages": ["Room only"], "memberNo": "987798775663",
+      "specials": [], "comments": [], "seed": true
+    },
+    {
+      "confirmNum": "11100000002", "hotelCode": "HGH1", "status": "CANCELLED",
+      "guest": {"title": "Ms.", "firstName": "Wei Xuan", "lastName": "Tan", "email": "wx.tan@gmail.com", "mobile": "+88656932145"},
+      "arrivalDate": "2026-07-10", "departureDate": "2026-07-12",
+      "rooms": [{"room_type": "Lakeview Room", "adults": 2, "children_ages": []}],
+      "ratePlan": "FLEX", "channel": "Direct", "packages": ["Room only"], "memberNo": "223422345569",
+      "specials": [], "comments": [], "cancellationNum": "90000000001", "seed": true
+    },
+    {
+      "confirmNum": "11100000003", "hotelCode": "HGH1", "status": "RESERVED",
+      "guest": {"title": null, "firstName": "Charlie", "lastName": "White", "email": "charlie.white@gmail.com", "mobile": null},
+      "arrivalDate": "2026-07-05", "departureDate": "2026-07-08",
+      "rooms": [{"room_type": "Premier Room, Lakeview", "adults": 2, "children_ages": []}],
+      "ratePlan": "AP", "channel": "Direct", "packages": ["Room only"], "memberNo": "123412345678",
+      "specials": [], "comments": [], "seed": true
+    }
+  ]
+}

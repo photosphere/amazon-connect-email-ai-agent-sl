@@ -1,0 +1,92 @@
+[
+ {
+  "source": "PEN2/PEN2 - Adventure Zone Brochure.pdf",
+  "hotel_code": "PEN2",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN2/PEN2 - In Room Dining Menu.pdf",
+  "hotel_code": "PEN2",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN2/PEN2 - Beach Grill's Bar and Grill on The Beach A La Carte Menu.pdf",
+  "hotel_code": "PEN2",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - Alcohol list.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - The Spa Menu.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - FIP Beverage List.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - Beachside Grill Ala Carte Menu.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - Beachside Grill Set A Menu.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - Beachside Grill Set B Menu.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - Beachside Grill Vege Set Menu.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - In Room Dining Menu.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - Laundry List.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - Lobby Bar Ala Carte Menu.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - Premier Wing Lounge Beverage menu.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - All-Day Cafe A La Carte Menu.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "PEN1/PEN1 - Wedding Proposal.pdf",
+  "hotel_code": "PEN1",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "LOYALTY/LOYALTY - Verification SOP/LOYALTY - Verification Procedure (Mainland China member).pdf",
+  "hotel_code": "LOYALTY",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ },
+ {
+  "source": "LOYALTY/LOYALTY - Verification SOP/Verification Procedure (Call or Guest Profile System) & Personal Data Protection for LOYALTY Member & Non-Member.pdf",
+  "hotel_code": "LOYALTY",
+  "reason": "no extractable text (image-only PDF, needs OCR)"
+ }
+]

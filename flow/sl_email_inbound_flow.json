@@ -1,0 +1,1068 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "EnableFlowLogs",
+  "Metadata": {
+    "entryPointPosition": {
+      "x": 20,
+      "y": 20
+    },
+    "ActionMetadata": {
+      "EnableFlowLogs": {
+        "position": {
+          "x": 160,
+          "y": 20
+        }
+      },
+      "CheckEmailChannel": {
+        "position": {
+          "x": 400,
+          "y": 20
+        }
+      },
+      "InvokeTriage": {
+        "position": {
+          "x": 640,
+          "y": 20
+        }
+      },
+      "SetTriageFallback": {
+        "position": {
+          "x": 640,
+          "y": 300
+        }
+      },
+      "StoreTriage": {
+        "position": {
+          "x": 880,
+          "y": 20
+        }
+      },
+      "CheckAiMode": {
+        "position": {
+          "x": 1120,
+          "y": 20
+        }
+      },
+      "CheckRouteNoAi": {
+        "position": {
+          "x": 1120,
+          "y": 320
+        }
+      },
+      "WaitForAgent": {
+        "position": {
+          "x": 1360,
+          "y": 20
+        }
+      },
+      "PollAgent": {
+        "position": {
+          "x": 1600,
+          "y": 20
+        }
+      },
+      "CheckPollStatus": {
+        "position": {
+          "x": 1840,
+          "y": 20
+        }
+      },
+      "SetAgentTimeout": {
+        "position": {
+          "x": 1840,
+          "y": 320
+        }
+      },
+      "StoreAgentResult": {
+        "position": {
+          "x": 2080,
+          "y": 20
+        }
+      },
+      "CheckDisposition": {
+        "position": {
+          "x": 2320,
+          "y": 20
+        }
+      },
+      "CreateReplyContact": {
+        "position": {
+          "x": 2560,
+          "y": 20
+        },
+        "children": [
+          "SendAiReply"
+        ]
+      },
+      "SendAiReply": {
+        "position": {
+          "x": 2560,
+          "y": 20
+        }
+      },
+      "MarkSent": {
+        "position": {
+          "x": 2800,
+          "y": 20
+        }
+      },
+      "MarkSendFailed": {
+        "position": {
+          "x": 2800,
+          "y": 300
+        }
+      },
+      "CheckTeam": {
+        "position": {
+          "x": 2560,
+          "y": 560
+        }
+      },
+      "SetQueueReservations": {
+        "position": {
+          "x": 2800,
+          "y": 560
+        },
+        "parameters": {
+          "QueueId": {
+            "displayName": "__QUEUE_RESERVATIONS_NAME__"
+          }
+        },
+        "queue": {
+          "text": "__QUEUE_RESERVATIONS_NAME__"
+        }
+      },
+      "SetQueueLoyalty": {
+        "position": {
+          "x": 2800,
+          "y": 760
+        },
+        "parameters": {
+          "QueueId": {
+            "displayName": "__QUEUE_LOYALTY_NAME__"
+          }
+        },
+        "queue": {
+          "text": "__QUEUE_LOYALTY_NAME__"
+        }
+      },
+      "SetQueueSecurity": {
+        "position": {
+          "x": 2800,
+          "y": 960
+        },
+        "parameters": {
+          "QueueId": {
+            "displayName": "__QUEUE_SECURITY_NAME__"
+          }
+        },
+        "queue": {
+          "text": "__QUEUE_SECURITY_NAME__"
+        }
+      },
+      "SetQueueGeneral": {
+        "position": {
+          "x": 2800,
+          "y": 1160
+        },
+        "parameters": {
+          "QueueId": {
+            "displayName": "__QUEUE_GENERAL_NAME__"
+          }
+        },
+        "queue": {
+          "text": "__QUEUE_GENERAL_NAME__"
+        }
+      },
+      "TransferToAgentQueue": {
+        "position": {
+          "x": 3060,
+          "y": 760
+        }
+      },
+      "Disconnect": {
+        "position": {
+          "x": 3300,
+          "y": 300
+        }
+      },
+      "FilterAutomatedSender": {
+        "position": {
+          "x": 400,
+          "y": 260
+        }
+      },
+      "FilterBounceSubject": {
+        "position": {
+          "x": 400,
+          "y": 500
+        }
+      },
+      "MarkLoopDropped": {
+        "position": {
+          "x": 640,
+          "y": 620
+        }
+      }
+    },
+    "Annotations": [],
+    "name": "SL-Email-AI-Inbound",
+    "description": "Example Hotel Email AI PoC: triage (new/reply, guards, classification) -> Claude agent -> auto reply or human queue with AI draft",
+    "type": "contactFlow",
+    "status": "PUBLISHED"
+  },
+  "Actions": [
+    {
+      "Identifier": "EnableFlowLogs",
+      "Type": "UpdateFlowLoggingBehavior",
+      "Parameters": {
+        "FlowLoggingBehavior": "Enabled"
+      },
+      "Transitions": {
+        "NextAction": "CheckEmailChannel"
+      }
+    },
+    {
+      "Identifier": "CheckEmailChannel",
+      "Type": "Compare",
+      "Parameters": {
+        "ComparisonValue": "$.Channel"
+      },
+      "Transitions": {
+        "NextAction": "Disconnect",
+        "Conditions": [
+          {
+            "NextAction": "FilterAutomatedSender",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "EMAIL"
+              ]
+            }
+          }
+        ],
+        "Errors": [
+          {
+            "NextAction": "Disconnect",
+            "ErrorType": "NoMatchingCondition"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "FilterAutomatedSender",
+      "Type": "Compare",
+      "Parameters": {
+        "ComparisonValue": "$.CustomerEndpoint.Address"
+      },
+      "Transitions": {
+        "NextAction": "FilterBounceSubject",
+        "Conditions": [
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "mailer-daemon"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "MAILER-DAEMON"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "Mailer-Daemon"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "postmaster"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "POSTMASTER"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "Postmaster"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "noreply"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "NOREPLY"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "NoReply"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "no-reply"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "NO-REPLY"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "No-Reply"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "donotreply"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "DoNotReply"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "bounces+"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextContains",
+              "Operands": [
+                "BOUNCES+"
+              ]
+            }
+          }
+        ],
+        "Errors": [
+          {
+            "NextAction": "FilterBounceSubject",
+            "ErrorType": "NoMatchingCondition"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "FilterBounceSubject",
+      "Type": "Compare",
+      "Parameters": {
+        "ComparisonValue": "$.SegmentAttributes['connect:EmailSubject']"
+      },
+      "Transitions": {
+        "NextAction": "InvokeTriage",
+        "Conditions": [
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextStartsWith",
+              "Operands": [
+                "Undeliverable:"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextStartsWith",
+              "Operands": [
+                "UNDELIVERABLE:"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextStartsWith",
+              "Operands": [
+                "Mail Delivery Failed"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextStartsWith",
+              "Operands": [
+                "Mail delivery failed"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextStartsWith",
+              "Operands": [
+                "MAIL DELIVERY FAILED"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextStartsWith",
+              "Operands": [
+                "Delivery Status Notification"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextStartsWith",
+              "Operands": [
+                "Returned mail"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextStartsWith",
+              "Operands": [
+                "Automatic reply:"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextStartsWith",
+              "Operands": [
+                "Auto:"
+              ]
+            }
+          },
+          {
+            "NextAction": "MarkLoopDropped",
+            "Condition": {
+              "Operator": "TextStartsWith",
+              "Operands": [
+                "Out of Office"
+              ]
+            }
+          }
+        ],
+        "Errors": [
+          {
+            "NextAction": "InvokeTriage",
+            "ErrorType": "NoMatchingCondition"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "MarkLoopDropped",
+      "Type": "UpdateContactAttributes",
+      "Parameters": {
+        "TargetContact": "Current",
+        "Attributes": {
+          "route": "DROP",
+          "triage_reason": "automated sender / bounce subject filtered in flow (email loop prevention)"
+        }
+      },
+      "Transitions": {
+        "NextAction": "Disconnect",
+        "Errors": [
+          {
+            "NextAction": "Disconnect",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "InvokeTriage",
+      "Type": "InvokeLambdaFunction",
+      "Parameters": {
+        "LambdaFunctionARN": "__TRIAGE_LAMBDA_ARN__",
+        "InvocationTimeLimitSeconds": "8",
+        "InvocationType": "SYNCHRONOUS",
+        "LambdaInvocationAttributes": {
+          "action": "triage"
+        },
+        "ResponseValidation": {
+          "ResponseType": "STRING_MAP"
+        }
+      },
+      "Transitions": {
+        "NextAction": "StoreTriage",
+        "Errors": [
+          {
+            "NextAction": "SetTriageFallback",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "SetTriageFallback",
+      "Type": "UpdateContactAttributes",
+      "Parameters": {
+        "TargetContact": "Current",
+        "Attributes": {
+          "route": "HUMAN",
+          "ai_mode": "NONE",
+          "team": "GENERAL",
+          "email_type": "UNKNOWN",
+          "triage_reason": "Triage Lambda failed or timed out - manual handling",
+          "disposition": "ESCALATE"
+        }
+      },
+      "Transitions": {
+        "NextAction": "CheckTeam",
+        "Errors": [
+          {
+            "NextAction": "CheckTeam",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "StoreTriage",
+      "Type": "UpdateContactAttributes",
+      "Parameters": {
+        "TargetContact": "Current",
+        "Attributes": {
+          "case_id": "$.External.case_id",
+          "email_type": "$.External.email_type",
+          "thread_evidence": "$.External.thread_evidence",
+          "route": "$.External.route",
+          "ai_mode": "$.External.ai_mode",
+          "team": "$.External.team",
+          "triage_reason": "$.External.triage_reason",
+          "language": "$.External.language",
+          "primary_dcode": "$.External.primary_dcode",
+          "dcodes": "$.External.dcodes",
+          "hotel_code": "$.External.hotel_code",
+          "sentiment": "$.External.sentiment",
+          "mailbox": "$.External.mailbox"
+        }
+      },
+      "Transitions": {
+        "NextAction": "CheckAiMode",
+        "Errors": [
+          {
+            "NextAction": "SetTriageFallback",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "CheckAiMode",
+      "Type": "Compare",
+      "Parameters": {
+        "ComparisonValue": "$.Attributes.ai_mode"
+      },
+      "Transitions": {
+        "NextAction": "CheckRouteNoAi",
+        "Conditions": [
+          {
+            "NextAction": "WaitForAgent",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "AUTO"
+              ]
+            }
+          },
+          {
+            "NextAction": "WaitForAgent",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "DRAFT_ONLY"
+              ]
+            }
+          }
+        ],
+        "Errors": [
+          {
+            "NextAction": "CheckRouteNoAi",
+            "ErrorType": "NoMatchingCondition"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "CheckRouteNoAi",
+      "Type": "Compare",
+      "Parameters": {
+        "ComparisonValue": "$.Attributes.route"
+      },
+      "Transitions": {
+        "NextAction": "CheckTeam",
+        "Conditions": [
+          {
+            "NextAction": "Disconnect",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "DROP"
+              ]
+            }
+          }
+        ],
+        "Errors": [
+          {
+            "NextAction": "CheckTeam",
+            "ErrorType": "NoMatchingCondition"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "WaitForAgent",
+      "Type": "Wait",
+      "Parameters": {
+        "TimeLimitSeconds": "10"
+      },
+      "Transitions": {
+        "NextAction": "PollAgent",
+        "Conditions": [
+          {
+            "NextAction": "PollAgent",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "WaitCompleted"
+              ]
+            }
+          }
+        ],
+        "Errors": [
+          {
+            "NextAction": "PollAgent",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "PollAgent",
+      "Type": "InvokeLambdaFunction",
+      "Parameters": {
+        "LambdaFunctionARN": "__TRIAGE_LAMBDA_ARN__",
+        "InvocationTimeLimitSeconds": "8",
+        "InvocationType": "SYNCHRONOUS",
+        "LambdaInvocationAttributes": {
+          "action": "poll"
+        },
+        "ResponseValidation": {
+          "ResponseType": "STRING_MAP"
+        }
+      },
+      "Transitions": {
+        "NextAction": "CheckPollStatus",
+        "Errors": [
+          {
+            "NextAction": "SetAgentTimeout",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "CheckPollStatus",
+      "Type": "Compare",
+      "Parameters": {
+        "ComparisonValue": "$.External.status"
+      },
+      "Transitions": {
+        "NextAction": "SetAgentTimeout",
+        "Conditions": [
+          {
+            "NextAction": "StoreAgentResult",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "READY"
+              ]
+            }
+          },
+          {
+            "NextAction": "WaitForAgent",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "PENDING"
+              ]
+            }
+          }
+        ],
+        "Errors": [
+          {
+            "NextAction": "SetAgentTimeout",
+            "ErrorType": "NoMatchingCondition"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "SetAgentTimeout",
+      "Type": "UpdateContactAttributes",
+      "Parameters": {
+        "TargetContact": "Current",
+        "Attributes": {
+          "disposition": "ESCALATE",
+          "escalation_reason": "AI agent did not return a result in time - manual handling"
+        }
+      },
+      "Transitions": {
+        "NextAction": "CheckTeam",
+        "Errors": [
+          {
+            "NextAction": "CheckTeam",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "StoreAgentResult",
+      "Type": "UpdateContactAttributes",
+      "Parameters": {
+        "TargetContact": "Current",
+        "Attributes": {
+          "disposition": "$.External.disposition",
+          "reply_subject": "$.External.reply_subject",
+          "reply_body": "$.External.reply_body",
+          "team": "$.External.team",
+          "escalation_reason": "$.External.escalation_reason",
+          "ai_summary": "$.External.ai_summary",
+          "open_items": "$.External.open_items",
+          "dcodes": "$.External.dcodes",
+          "hotel_code": "$.External.hotel_code",
+          "language": "$.External.language",
+          "sentiment": "$.External.sentiment",
+          "grounding": "$.External.grounding",
+          "actions": "$.External.actions"
+        }
+      },
+      "Transitions": {
+        "NextAction": "CheckDisposition",
+        "Errors": [
+          {
+            "NextAction": "SetAgentTimeout",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "CheckDisposition",
+      "Type": "Compare",
+      "Parameters": {
+        "ComparisonValue": "$.Attributes.disposition"
+      },
+      "Transitions": {
+        "NextAction": "CheckTeam",
+        "Conditions": [
+          {
+            "NextAction": "CreateReplyContact",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "AUTO_SEND"
+              ]
+            }
+          }
+        ],
+        "Errors": [
+          {
+            "NextAction": "CheckTeam",
+            "ErrorType": "NoMatchingCondition"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "CreateReplyContact",
+      "Type": "CreateContact",
+      "Parameters": {
+        "Channel": "EMAIL",
+        "RelatedContact": "CURRENT"
+      },
+      "Transitions": {
+        "NextAction": "SendAiReply",
+        "Errors": [
+          {
+            "NextAction": "MarkSendFailed",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "SendAiReply",
+      "Type": "StartOutboundEmailContact",
+      "Parameters": {
+        "FromEmailAddress": {
+          "EmailAddress": "$.SystemEndpoint.Address"
+        },
+        "DestinationEmailAddress": {
+          "EmailAddress": "$.CustomerEndpoint.Address"
+        },
+        "EmailMessage": {
+          "MessageSourceType": "RAW",
+          "RawMessage": {
+            "Subject": "$.Attributes.reply_subject",
+            "Body": "$.Attributes.reply_body",
+            "ContentType": "text/plain"
+          }
+        }
+      },
+      "Transitions": {
+        "NextAction": "MarkSent",
+        "Errors": [
+          {
+            "NextAction": "MarkSendFailed",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "MarkSent",
+      "Type": "UpdateContactAttributes",
+      "Parameters": {
+        "TargetContact": "Current",
+        "Attributes": {
+          "ai_reply_sent": "true"
+        }
+      },
+      "Transitions": {
+        "NextAction": "Disconnect",
+        "Errors": [
+          {
+            "NextAction": "Disconnect",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "MarkSendFailed",
+      "Type": "UpdateContactAttributes",
+      "Parameters": {
+        "TargetContact": "Current",
+        "Attributes": {
+          "ai_reply_sent": "false",
+          "escalation_reason": "AI reply could not be sent - please send the draft in reply_body"
+        }
+      },
+      "Transitions": {
+        "NextAction": "CheckTeam",
+        "Errors": [
+          {
+            "NextAction": "CheckTeam",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "CheckTeam",
+      "Type": "Compare",
+      "Parameters": {
+        "ComparisonValue": "$.Attributes.team"
+      },
+      "Transitions": {
+        "NextAction": "SetQueueGeneral",
+        "Conditions": [
+          {
+            "NextAction": "SetQueueReservations",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "RESERVATIONS"
+              ]
+            }
+          },
+          {
+            "NextAction": "SetQueueLoyalty",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "LOYALTY"
+              ]
+            }
+          },
+          {
+            "NextAction": "SetQueueSecurity",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "SECURITY"
+              ]
+            }
+          }
+        ],
+        "Errors": [
+          {
+            "NextAction": "SetQueueGeneral",
+            "ErrorType": "NoMatchingCondition"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "SetQueueReservations",
+      "Type": "UpdateContactTargetQueue",
+      "Parameters": {
+        "QueueId": "__QUEUE_RESERVATIONS_ARN__"
+      },
+      "Transitions": {
+        "NextAction": "TransferToAgentQueue",
+        "Errors": [
+          {
+            "NextAction": "SetQueueGeneral",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "SetQueueLoyalty",
+      "Type": "UpdateContactTargetQueue",
+      "Parameters": {
+        "QueueId": "__QUEUE_LOYALTY_ARN__"
+      },
+      "Transitions": {
+        "NextAction": "TransferToAgentQueue",
+        "Errors": [
+          {
+            "NextAction": "SetQueueGeneral",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "SetQueueSecurity",
+      "Type": "UpdateContactTargetQueue",
+      "Parameters": {
+        "QueueId": "__QUEUE_SECURITY_ARN__"
+      },
+      "Transitions": {
+        "NextAction": "TransferToAgentQueue",
+        "Errors": [
+          {
+            "NextAction": "SetQueueGeneral",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "SetQueueGeneral",
+      "Type": "UpdateContactTargetQueue",
+      "Parameters": {
+        "QueueId": "__QUEUE_GENERAL_ARN__"
+      },
+      "Transitions": {
+        "NextAction": "TransferToAgentQueue",
+        "Errors": [
+          {
+            "NextAction": "Disconnect",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "TransferToAgentQueue",
+      "Type": "TransferContactToQueue",
+      "Parameters": {},
+      "Transitions": {
+        "NextAction": "Disconnect",
+        "Errors": [
+          {
+            "NextAction": "Disconnect",
+            "ErrorType": "QueueAtCapacity"
+          },
+          {
+            "NextAction": "Disconnect",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "Disconnect",
+      "Type": "DisconnectParticipant",
+      "Parameters": {},
+      "Transitions": {}
+    }
+  ]
+}

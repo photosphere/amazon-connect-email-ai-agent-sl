@@ -1,0 +1,168 @@
+{
+  "_source": "POC Testing Data tab (AI Project prequalification vendor response.xlsx) rows 7-10, Hotel List.pdf, Room Info PDFs, Email Signature PDFs. Room catalog lists only the main room types used by the PoC scenarios; max occupancy is copied from the Room Info PDFs.",
+  "common_policy": {
+    "adult_age_from": 12,
+    "child_meal_policy": "At both city and resort hotels, when accompanied by a dine-in adult, up to 2 children of registered in-house hotel guests at the age of 6 and below can enjoy buffet meals at the all-day dining venues at no additional charge. Additional children at the age of 6 and below and all children who are above 6 years of age but under 12 years of age will receive a 50% discount on the adult buffet price. Children of registered walk-in guests under the age of 12 will receive a 50% discount on buffet meals at the all-day dining outlets.",
+    "cancellation_policy": {
+      "FLEX": "Cancellations made after 18:00 local hotel time, one day prior to arrival, will be subject to a one-night room charge, plus applicable service charges, taxes, and fees.",
+      "AP": "Credit card prepayment for the full duration of the stay is required at the time of booking. Prepayment will not be refunded for cancellations. Amendment to reservations is not allowed."
+    },
+    "payment_method": {
+      "FLEX": "Guest is required to provide a credit card to guarantee the reservation; the room rate will be charged upon check out.",
+      "AP": "A full prepayment is required upon reservation."
+    },
+    "booking_verification": "For any reservation amendment, cancellation and reconfirmation, obtain the confirmation number from the guest and verify it with booking details (guest's name, mobile number, email address).",
+    "recap_after_booking": "Recap hotel name, confirmation number, guest's name, travelling dates, room types and total rate inclusive of taxes.",
+    "upsell": "While quoting: may upsell airport transfer, room decoration (special occasions such as wedding anniversary, birthday, honeymoon) and room upgrade. After a successful booking: upsell airport transfer, spa and F&B. Only upsell airport transfer if the guest is travelling by flight.",
+    "special_request_rules": "Only one extra bed or one baby cot per room. Inventory 3 units per hotel. All special requests are subject to availability; guaranteed requests may incur a charge per hotel policy. LOYALTY members get early check-in / late check-out per tier benefits."
+  },
+  "hotels": {
+    "HGH1": {
+      "hotel_code": "HGH1",
+      "system_code": "HGH1",
+      "name_en": "Lakeside Hotel Hangzhou",
+      "name_zh": "杭州湖畔酒店",
+      "office": "CXC OS",
+      "currency": "RMB",
+      "availability": {"from": "2026-07-01", "to": "2026-07-31", "fully_booked": ["2026-07-20", "2026-07-21", "2026-07-22", "2026-07-23"], "min_stay_rule": {"from": "2026-07-25", "to": "2026-07-31", "min_nights": 2}},
+      "rates": {"FLEX": 800, "AP": 700},
+      "third_occupancy_supplement": 50,
+      "tax": {"service_charge_pct": 10, "vat_pct": 6, "compound": true, "per_room_night_fees": [], "tourism_tax_foreign_nett": 0, "note": "Subject to 10% Service Charge and 6% VAT"},
+      "airport_transfer": [
+        {"vehicle": "Mercedes Benz S Class", "price": 250, "unit": "per car per way", "capacity": "3 pax + 3 luggages", "price_note": "++"},
+        {"vehicle": "Toyota Alphard", "price": 350, "unit": "per car per way", "capacity": "5 pax + 5 luggages", "price_note": "++"}
+      ],
+      "check_in": "14:00", "check_out": "12:00",
+      "rooms": {
+        "Garden View Room": {"max": ["2A1C", "1A2C"]},
+        "Lakeview Room": {"max": ["2A1C", "1A2C"]},
+        "Premier Room, Garden View": {"max": ["2A2C", "3A1C"]},
+        "Premier Room, Lakeview": {"max": ["2A2C", "3A1C"]},
+        "Romance Room, Garden View": {"max": ["2A2C", "3A1C"]},
+        "Romance Room, Lakeview": {"max": ["2A2C", "3A1C"]},
+        "Serenity Suite, Garden View": {"max": ["2A2C", "3A1C"]},
+        "Serenity Suite, Lakeview": {"max": ["2A2C", "3A1C"]},
+        "West Lake Suite": {"max": ["2A2C", "3A1C"]},
+        "Lakeside Hotel Suite": {"max": ["2A2C", "3A1C"]}
+      },
+      "signature": {
+        "en": "Yours sincerely,\nAI Assistant\nReservations\nLakeside Hotel Hangzhou\nE. reservations.hgh1@example-lakeside.com\nT. ++00 0000 0000\nExample Road, Xihu District, 310007 Hangzhou, China\nexample-hotels.com",
+        "zh": "此致！\nAI 助理\n预订部\n杭州湖畔酒店\nE. reservations.hgh1@example-lakeside.com\nT. ++00 0000 0000\n中国杭州市西湖区示例路，310007\nexample-hotels.com"
+      }
+    },
+    "SZX1": {
+      "hotel_code": "SZX1",
+      "name_en": "Futian City Hotel, Shenzhen",
+      "name_zh": "深圳福田城市酒店",
+      "office": "CXC OS",
+      "currency": "RMB",
+      "availability": {"from": "2026-08-01", "to": "2026-08-31", "fully_booked": ["2026-08-20", "2026-08-21", "2026-08-22", "2026-08-23"], "min_stay_rule": {"from": "2026-08-25", "to": "2026-08-31", "min_nights": 2}},
+      "rates": {"FLEX": 500, "AP": 400},
+      "third_occupancy_supplement": 50,
+      "tax": {"service_charge_pct": 10, "vat_pct": 6, "compound": true, "per_room_night_fees": [], "tourism_tax_foreign_nett": 0, "note": "Subject to 10% Service Charge and 6% VAT"},
+      "airport_transfer": [
+        {"vehicle": "Mercedes Benz S Class", "price": 250, "unit": "per car per way", "capacity": "3 pax + 3 luggages", "price_note": "++"},
+        {"vehicle": "Toyota Alphard", "price": 350, "unit": "per car per way", "capacity": "5 pax + 5 luggages", "price_note": "++"}
+      ],
+      "check_in": "14:00", "check_out": "12:00",
+      "rooms": {
+        "Deluxe Room": {"max": ["2A2C", "3A"]},
+        "Deluxe City View Room": {"max": ["2A2C", "3A"]},
+        "Executive Club Deluxe Room": {"max": ["2A2C", "3A"]},
+        "Executive Club Premier Room": {"max": ["2A2C", "3A"]},
+        "Executive Suite": {"max": ["2A2C", "3A"]},
+        "Deluxe Suite": {"max": ["2A2C", "3A"]},
+        "Specialty Suite": {"max": ["2A2C", "3A"]},
+        "Example Hotel Suite": {"max": ["2A2C", "3A"]},
+        "Presidential Suite": {"max": ["2A2C", "3A"]}
+      },
+      "signature": {
+        "en": "Yours sincerely,\nAI Assistant\nCustomer Sales Executive\nFutian City Hotel, Shenzhen\nE. reservations.szx1@example-hotels.com\nT. +00 0000 0000\nExample Road, Futian District, Shenzhen 518048, Guangdong Province, China\nexample-hotels.com",
+        "zh": "此致！\nAI 助理\n客户销售代表\n深圳福田城市酒店\nE. reservations.szx1@example-hotels.com\nT. +00 0000 0000\n中国深圳市福田区示例路\nexample-hotels.com"
+      }
+    },
+    "PEN1": {
+      "hotel_code": "PEN1",
+      "name_en": "Seaview Resort, Penang",
+      "name_zh": "槟城海景度假酒店",
+      "office": "CXC OS 2",
+      "currency": "MYR",
+      "availability": {"from": "2026-09-01", "to": "2026-09-30", "fully_booked": ["2026-09-20", "2026-09-21", "2026-09-22", "2026-09-23"], "min_stay_rule": {"from": "2026-09-25", "to": "2026-09-30", "min_nights": 2}},
+      "rates": {"FLEX": 850, "AP": 750},
+      "third_occupancy_supplement": 50,
+      "tax": {"service_charge_pct": 10, "vat_pct": 8, "compound": true, "per_room_night_fees": [{"name": "Local Government Fee (Penang)", "amount": 3}], "tourism_tax_foreign_nett": 10, "note": "Subject to 10% Service Charge, 8% government tax (SST) and MYR 3 Local Government Fee (Penang) per room per night. A Tourism Tax of MYR 10 nett per room per night applies to foreign passport holders."},
+      "airport_transfer": [
+        {"vehicle": "Mercedes Benz S Class", "price": 250, "unit": "per car per way", "capacity": "3 pax + 3 luggages", "price_note": "++"},
+        {"vehicle": "Toyota Alphard", "price": 350, "unit": "per car per way", "capacity": "5 pax + 5 luggages", "price_note": "++"}
+      ],
+      "check_in": "15:00", "check_out": "12:00",
+      "rooms": {
+        "Garden Wing Deluxe Garden View Room": {"max": ["2A2C", "3A1C"]},
+        "Garden Wing Deluxe Seaview Room": {"max": ["2A2C", "3A1C"]},
+        "Garden Wing Superior Family Seaview Room": {"max": ["2A2C", "3A1C"]},
+        "Garden Wing Deluxe Family Room": {"max": ["2A2C", "3A1C", "4A"]},
+        "Premier Wing Premier Superior Room": {"max": ["2A2C", "3A1C"]},
+        "Premier Wing Premier Deluxe Room": {"max": ["2A2C", "3A1C"]},
+        "Premier Wing Premier Junior Suite": {"max": ["2A2C", "3A1C"]},
+        "Premier Wing Deluxe Suite": {"max": ["2A2C", "3A1C"]}
+      },
+      "signature": {
+        "en": "Best regards,\nAI Assistant\nReservations Executive\nSeaview Resort, Penang\nE. reservations.pen1@example-hotels.com\nT. +00 0000 0000\nBeachside Beach, 11100 Penang, Malaysia\nhttp://www.example-hotels.com/penang/seaviewresort",
+        "zh": "此致,\nAI 助理\n客房預訂部\n槟城海景度假酒店\nE. reservations.pen1@example-hotels.com\nT. +00 0000 0000\nBeachside Beach, 11100 Penang, Malaysia"
+      }
+    },
+    "PEN2": {
+      "hotel_code": "PEN2",
+      "name_en": "Beachfront Resort, Penang",
+      "name_zh": "槟城海滩度假酒店",
+      "office": "CXC OS 2",
+      "currency": "MYR",
+      "availability": {"from": "2026-10-01", "to": "2026-10-31", "fully_booked": ["2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23"], "min_stay_rule": {"from": "2026-10-25", "to": "2026-10-31", "min_nights": 2}},
+      "rates": {"FLEX": 750, "AP": 650},
+      "third_occupancy_supplement": 50,
+      "tax": {"service_charge_pct": 10, "vat_pct": 8, "compound": true, "per_room_night_fees": [{"name": "Local Government Fee (Penang)", "amount": 3}], "tourism_tax_foreign_nett": 10, "note": "Subject to 10% Service Charge, 8% government tax (SST) and MYR 3 Local Government Fee (Penang) per room per night. A Tourism Tax of MYR 10 nett per room per night applies to foreign passport holders."},
+      "airport_transfer": [
+        {"vehicle": "Mercedes Benz S Class", "price": 250, "unit": "per car per way", "capacity": "3 pax + 3 luggages", "price_note": "++"},
+        {"vehicle": "Toyota Alphard", "price": 350, "unit": "per car per way", "capacity": "5 pax + 5 luggages", "price_note": "++"}
+      ],
+      "check_in": "15:00", "check_out": "12:00",
+      "rooms": {
+        "Superior Room": {"max": ["2A2C", "3A1C"]},
+        "Deluxe Room": {"max": ["2A2C", "3A1C"]},
+        "Executive Seaview Room": {"max": ["2A2C", "3A1C"]},
+        "Executive Suite": {"max": ["2A2C", "3A1C"]},
+        "Superior Family Combo": {"max": ["2A2C", "3A"]},
+        "Sands Adventure Suite": {"max": ["2A2C", "3A1C"]}
+      },
+      "signature": {
+        "en": "Best regards,\nAI Assistant\nReservations Executive\nBeachfront Resort, Penang\nE. reservations.pen2@example-hotels.com\nT. +00 0000 0000\nBeachside Beach, 11100 Penang, Malaysia\nhttp://www.example-hotels.com/penang/beachfrontresort/",
+        "zh": "此致,\nAI 助理\n客房預訂部\n槟城海滩度假酒店\nE. reservations.pen2@example-hotels.com\nT. +00 0000 0000\nBeachside Beach, 11100 Penang, Malaysia"
+      }
+    }
+  },
+  "mailbox_signatures": {
+    "CXC": {
+      "en": "Yours sincerely,\n\nAI Assistant\nCustomer Service Executive\nCustomer Experience Centre\nE. reservations@example-hotels.com\nT. Worldwide Reservations Number",
+      "zh": "此致，\n\nAI 助理\n客户服务专员\n客户体验中心\nE. reservations@example-hotels.com\nT. 全球预订热线",
+      "zh-TW": "此致，\n\nAI 助理\n客戶服務專員\n客戶互動與流程轉型部\nE. reservations@example-hotels.com\nT. 全球預訂熱線"
+    },
+    "LOYALTY": {
+      "en": "Yours sincerely,\nAI Assistant\nMember Service Executive, Example Rewards Member Services\nExample Hotel Management Ltd.\nE. rewards@example-hotels.com\nT. +00 0000 0000\nExample Tower, Example Road, Hong Kong SAR\nexample-hotels.com\nGet the most out of your points. Click here to explore the exciting lifestyle rewards!",
+      "zh": "此致,\nAI 助理\n示例会员俱乐部会员服务专员\n示例酒店管理有限公司\nE. rewards@example-hotels.com\nT. +00 0000 0000\n香港示例区示例路合作中心28楼\nexample-hotels.com",
+      "zh-TW": "此致,\nAI 助理\n示例會員俱樂部會員服務專員\n示例酒店管理有限公司\nE. rewards@example-hotels.com\nT. +00 0000 0000\n香港示例区示例路合作中心28樓\nexample-hotels.com"
+    }
+  },
+  "mailboxes": {
+    "_comment": "Maps the Connect email address the guest wrote to (local part prefix, case-insensitive) to a mailbox profile. The resource prefix added by deploy_week_N.sh (e.g. 'sl_' in sl_reservations@) is stripped first (env MAILBOX_PREFIX). The AI always replies from that same address ($.SystemEndpoint.Address).",
+    "rules": [
+      {"prefix": "rewards", "mailbox": "LOYALTY", "default_hotel": null},
+      {"prefix": "loyalty", "mailbox": "LOYALTY", "default_hotel": null},
+      {"prefix": "reservations.pen1", "mailbox": "HOTEL", "default_hotel": "PEN1"},
+      {"prefix": "reservations.pen2", "mailbox": "HOTEL", "default_hotel": "PEN2"},
+      {"prefix": "reservations.szx1", "mailbox": "HOTEL", "default_hotel": "SZX1"},
+      {"prefix": "reservations.hgh1", "mailbox": "HOTEL", "default_hotel": "HGH1"},
+      {"prefix": "reservations", "mailbox": "CXC", "default_hotel": null}
+    ],
+    "default": {"mailbox": "CXC", "default_hotel": null}
+  }
+}
