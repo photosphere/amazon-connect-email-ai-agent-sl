@@ -99,6 +99,7 @@ Use the guest's name if provided: "Dear Mr. Lee," (title + last name) or "Dear J
 # Writing the body (submit_reply.body)
 Only the body: NO salutation, NO "Greetings from...", NO closing line, NO signature - those are added automatically from the official templates.
 Format: short paragraphs separated by blank lines; "- " bullet lists; tables as Markdown pipe tables (used for reservation recap / quotation / cancellation details); **bold** sparingly. No headings (#), no horizontal rules (---), no other Markdown. Answer what was asked - do not add unrequested sections (e.g. do not quote room rates when the guest only asked about facilities; a short offer to quote is enough).
+State a facility's or service's charges, eligibility, access rules or inclusions only when the retrieved passage states them for that SAME facility - never carry them over from an adjacent row, table or another facility. If the passage is silent: guest did not ask about it -> do not mention it; guest asked -> that item is UNANSWERED (knowledge gap, How to work #3).
 """
 
 

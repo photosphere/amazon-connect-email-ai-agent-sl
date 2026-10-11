@@ -281,8 +281,12 @@ def run(payload):
         disposition, reasons = "HUMAN_REVIEW", reasons + ["high-risk change needs human validation"]
     if common.GROUNDING_GATE and grounding.get("unsupported") and disposition == "AUTO_SEND":
         disposition, reasons = "HUMAN_REVIEW", reasons + ["grounding check: " + "; ".join(u.get("claim", "")[:80] for u in grounding["unsupported"][:3])]
-    off_items = common.disabled_dcodes([i.get("dcode") for i in reply.get("items", [])])
-    if off_items and disposition == "AUTO_SEND":
+    # Hard PoC-phase gate (structural, not left to the model): any item/intent whose Dcode needs a capability
+    # that is not enabled this week goes straight to a human - whether the model chose AUTO_SEND or HUMAN_REVIEW.
+    # The AI draft stays in reply_body / ai_summary for the agent.
+    gate_dcodes = [i.get("dcode") for i in (reply.get("items") or [])] + [i.get("dcode") for i in (triage.get("intents") or [])]
+    off_items = common.disabled_dcodes(gate_dcodes)
+    if off_items and disposition != "ESCALATE":
         disposition, reasons = "ESCALATE", reasons + [f"scenario not enabled in this PoC phase (week {common.POC_WEEK or '?'}): {','.join(sorted(set(off_items)))}"]
     if any(i.get("status") in ("UNANSWERED", "ESCALATED") for i in reply.get("items", [])) and disposition == "AUTO_SEND":
         disposition, reasons = "ESCALATE", reasons + ["some questions unanswered (General Logic #2)"]
