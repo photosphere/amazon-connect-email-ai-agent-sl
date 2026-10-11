@@ -12,13 +12,14 @@
 #   NAME_PREFIX            资源前缀，默认 sl（小写字母开头，小写字母/数字，最多 10 位）。由它派生：
 #                            Lambda / IAM      <p>-email-ai-triage / <p>-email-ai-agent / <p>-email-ai-lambda-role
 #                            DynamoDB          <p>-email-ai-poc
-#                            Connect           <P>-Email-AI-Inbound（flow）、<P>-Email-General / -Security /
+#                            Connect           <P>-Email-AI-Inbound（flow）、<P>-Email-AI-AgentGuide（agent guide flow，Show view 详情视图）、
+#                                              <P>-Email-General / -Security /
 #                                              -Reservations / -Loyalty（队列）、<P>-Email-AI-Agents（路由配置文件）
 #                            邮箱              <p>_reservations@、<p>_rewards@、<p>_reservations.pen1@ ...
 #                          （<p> = 前缀，<P> = 大写前缀）。下面的单项变量可覆盖派生名。
 #   ASSUME_YES             非交互运行时设为 true（跳过确认）
 #   AWS_PROFILE            optional
-#   PREFIX / TABLE_NAME / FLOW_NAME / QUEUE_GENERAL / QUEUE_SECURITY / QUEUE_RESERVATIONS / QUEUE_LOYALTY /
+#   PREFIX / TABLE_NAME / FLOW_NAME / GUIDE_FLOW_NAME / QUEUE_GENERAL / QUEUE_SECURITY / QUEUE_RESERVATIONS / QUEUE_LOYALTY /
 #   ROUTING_PROFILE_NAME   覆盖派生名（一般不需要）
 #   EMAIL_DOMAIN           default <instance-alias>.email.connect.aws (must be an email domain of the instance)
 #   EMAIL_LOCAL_PARTS      default reservations,rewards,reservations.pen1,reservations.pen2,reservations.szx1,reservations.hgh1
@@ -120,6 +121,7 @@ derive_names() {  # explicit env overrides win; everything else comes from NAME_
   PREFIX="${PREFIX:-$NAME_PREFIX-email-ai}"
   TABLE_NAME="${TABLE_NAME:-$NAME_PREFIX-email-ai-poc}"
   FLOW_NAME="${FLOW_NAME:-$up-Email-AI-Inbound}"
+  GUIDE_FLOW_NAME="${GUIDE_FLOW_NAME:-$up-Email-AI-AgentGuide}"
   QUEUE_GENERAL="${QUEUE_GENERAL:-$up-Email-General}"
   QUEUE_SECURITY="${QUEUE_SECURITY:-$up-Email-Security}"
   QUEUE_RESERVATIONS="${QUEUE_RESERVATIONS:-$up-Email-Reservations}"
@@ -166,8 +168,8 @@ init_env() {
   fi
   if lib_interactive && [[ "${SKIP_INIT_CONFIRM:-false}" != "true" ]]; then
     local lps; lps="$(IFS=','; for x in $EMAIL_LOCAL_PARTS; do printf '%s ' "$(addr "$x")"; done)"
-    printf '\n  实例         %s（%s，%s，账号 %s）\n  前缀         %s\n  Lambda       %s / %s\n  DynamoDB     %s\n  flow         %s\n  队列         %s / %s / %s / %s\n  路由配置文件 %s\n  邮箱         %s\n\n' \
-      "$INSTANCE_ALIAS" "$INSTANCE_ID" "$REGION" "$ACCOUNT" "$NAME_PREFIX" "$TRIAGE_FN" "$AGENT_FN" "$TABLE_NAME" "$FLOW_NAME" \
+    printf '\n  实例         %s（%s，%s，账号 %s）\n  前缀         %s\n  Lambda       %s / %s\n  DynamoDB     %s\n  flow         %s / %s\n  队列         %s / %s / %s / %s\n  路由配置文件 %s\n  邮箱         %s\n\n' \
+      "$INSTANCE_ALIAS" "$INSTANCE_ID" "$REGION" "$ACCOUNT" "$NAME_PREFIX" "$TRIAGE_FN" "$AGENT_FN" "$TABLE_NAME" "$FLOW_NAME" "$GUIDE_FLOW_NAME" \
       "$QUEUE_GENERAL" "$QUEUE_SECURITY" "$QUEUE_RESERVATIONS" "$QUEUE_LOYALTY" "$ROUTING_PROFILE_NAME" "$lps" >&2
     local ok; read -r -p "确认部署到以上实例并使用以上名称？[Y/n]: " ok </dev/tty || true
     [[ -z "$ok" || "$ok" =~ ^[YyＹ是] ]] || die "已取消。"
@@ -583,16 +585,69 @@ ensure_routing_profile() {  # $@ queue names to serve on the EMAIL channel
 }
 
 # ---------------------------------------------------------------- flow
+_upsert_flow() {  # $1 flow name, $2 rendered content file, $3 description -> UPSERT_FLOW_ID (create, or update only if changed)
+  local id
+  "${AWSC[@]}" connect list-contact-flows --instance-id "$INSTANCE_ID" --contact-flow-types CONTACT_FLOW --output json >"$WORK/flows.json"
+  id="$(unique_id "$WORK/flows.json" ContactFlowSummaryList Name "$1" Id)"
+  if [[ -z "$id" ]]; then
+    log "Creating flow $1"
+    id="$("${AWSC[@]}" connect create-contact-flow --instance-id "$INSTANCE_ID" --name "$1" --type CONTACT_FLOW \
+      --description "$3" --content "file://$2" --status PUBLISHED \
+      --query ContactFlowId --output text)"
+  else
+    "${AWSC[@]}" connect describe-contact-flow --instance-id "$INSTANCE_ID" --contact-flow-id "$id" --output json >"$WORK/flow-cur.json"
+    if python3 - "$WORK/flow-cur.json" "$2" <<'PY'
+import json, sys
+cur = json.load(open(sys.argv[1]))["ContactFlow"]
+try:
+    same = cur.get("Status") == "PUBLISHED" and json.loads(cur.get("Content") or "{}") == json.load(open(sys.argv[2], encoding="utf-8"))
+except json.JSONDecodeError:
+    same = False
+sys.exit(0 if same else 1)
+PY
+    then
+      log "Flow $1 unchanged"
+    else
+      log "Updating flow $1 ($id)"
+      "${AWSC[@]}" connect update-contact-flow-content --instance-id "$INSTANCE_ID" --contact-flow-id "$id" --content "file://$2"
+    fi
+  fi
+  UPSERT_FLOW_ID="$id"
+}
+
+publish_agent_guide_flow() {  # agent guide (Show view, AWS managed Detail view) started by the inbound flow's DefaultAgentUI event hook
+  python3 - "$HERE/flow/sl_email_agent_guide_flow.json" "$WORK/guide-flow.json" "$CONNECT_INSTANCE_ARN" "$REGION" <<'PY'
+import json, sys
+src, dst, instance_arn, region = sys.argv[1:]
+partition = instance_arn.split(":")[1]
+rep = {"__DETAIL_VIEW_ARN__": f"arn:{partition}:connect:{region}:aws:view/detail:1"}
+def render(n):
+    if isinstance(n, dict):
+        return {k: render(v) for k, v in n.items()}
+    if isinstance(n, list):
+        return [render(v) for v in n]
+    return rep.get(n, n) if isinstance(n, str) else n
+flow = render(json.load(open(src, encoding="utf-8")))
+assert "__DETAIL_VIEW_ARN__" not in json.dumps(flow), "unrendered placeholder __DETAIL_VIEW_ARN__"
+json.dump(flow, open(dst, "w", encoding="utf-8"), ensure_ascii=False)
+PY
+  _upsert_flow "$GUIDE_FLOW_NAME" "$WORK/guide-flow.json" "Email AI PoC agent guide - Detail view of triage / AI agent contact attributes"
+  GUIDE_FLOW_ID="$UPSERT_FLOW_ID"
+  GUIDE_FLOW_ARN="$CONNECT_INSTANCE_ARN/contact-flow/$GUIDE_FLOW_ID"
+  note "Agent guide flow $GUIDE_FLOW_NAME ($GUIDE_FLOW_ID): Show view (Detail) of the triage / AI agent attributes in the agent workspace - agents' security profile needs 'Agent Applications - Custom views - All'"
+}
+
 publish_flow() {  # team queues that do not exist yet fall back to the General queue
+  publish_agent_guide_flow
   _list_queues
   local gen_arn; gen_arn="$(queue_field "$QUEUE_GENERAL" Arn)"
   [[ -n "$gen_arn" ]] || die "Queue $QUEUE_GENERAL missing - run deploy_week_1.sh."
   python3 - "$HERE/flow/sl_email_inbound_flow.json" "$WORK/flow.json" "$TRIAGE_ARN" "$WORK/queues.json" \
-    "$QUEUE_GENERAL" "$QUEUE_SECURITY" "$QUEUE_RESERVATIONS" "$QUEUE_LOYALTY" >"$WORK/flowqueues.txt" <<'PY'
+    "$QUEUE_GENERAL" "$QUEUE_SECURITY" "$QUEUE_RESERVATIONS" "$QUEUE_LOYALTY" "$GUIDE_FLOW_ARN" "$GUIDE_FLOW_NAME" >"$WORK/flowqueues.txt" <<'PY'
 import json, sys
-src, dst, triage, qfile, gen, sec, res, loyalty = sys.argv[1:]
+src, dst, triage, qfile, gen, sec, res, loyalty, guide_arn, guide_name = sys.argv[1:]
 queues = {q["Name"]: q["Arn"] for q in json.load(open(qfile))["QueueSummaryList"] if q.get("Name")}
-rep, used = {"__TRIAGE_LAMBDA_ARN__": triage}, []
+rep, used = {"__TRIAGE_LAMBDA_ARN__": triage, "__AGENT_GUIDE_FLOW_ARN__": guide_arn, "__AGENT_GUIDE_FLOW_NAME__": guide_name}, []
 for key, name in (("GENERAL", gen), ("SECURITY", sec), ("RESERVATIONS", res), ("LOYALTY", loyalty)):
     real = name if name in queues else gen
     rep[f"__QUEUE_{key}_NAME__"], rep[f"__QUEUE_{key}_ARN__"] = real, queues[real]
@@ -609,31 +664,8 @@ assert not left, f"unrendered placeholders {left}"
 json.dump(flow, open(dst, "w", encoding="utf-8"), ensure_ascii=False)
 print(" ".join(used))
 PY
-  "${AWSC[@]}" connect list-contact-flows --instance-id "$INSTANCE_ID" --contact-flow-types CONTACT_FLOW --output json >"$WORK/flows.json"
-  FLOW_ID="$(unique_id "$WORK/flows.json" ContactFlowSummaryList Name "$FLOW_NAME" Id)"
-  if [[ -z "$FLOW_ID" ]]; then
-    log "Creating flow $FLOW_NAME"
-    FLOW_ID="$("${AWSC[@]}" connect create-contact-flow --instance-id "$INSTANCE_ID" --name "$FLOW_NAME" --type CONTACT_FLOW \
-      --description "Email AI PoC inbound email flow" --content "file://$WORK/flow.json" --status PUBLISHED \
-      --query ContactFlowId --output text)"
-  else
-    "${AWSC[@]}" connect describe-contact-flow --instance-id "$INSTANCE_ID" --contact-flow-id "$FLOW_ID" --output json >"$WORK/flow-cur.json"
-    if python3 - "$WORK/flow-cur.json" "$WORK/flow.json" <<'PY'
-import json, sys
-cur = json.load(open(sys.argv[1]))["ContactFlow"]
-try:
-    same = cur.get("Status") == "PUBLISHED" and json.loads(cur.get("Content") or "{}") == json.load(open(sys.argv[2], encoding="utf-8"))
-except json.JSONDecodeError:
-    same = False
-sys.exit(0 if same else 1)
-PY
-    then
-      log "Flow $FLOW_NAME unchanged"
-    else
-      log "Updating flow $FLOW_NAME ($FLOW_ID)"
-      "${AWSC[@]}" connect update-contact-flow-content --instance-id "$INSTANCE_ID" --contact-flow-id "$FLOW_ID" --content "file://$WORK/flow.json"
-    fi
-  fi
+  _upsert_flow "$FLOW_NAME" "$WORK/flow.json" "Email AI PoC inbound email flow"
+  FLOW_ID="$UPSERT_FLOW_ID"
   note "Flow $FLOW_NAME ($FLOW_ID) queues: $(cat "$WORK/flowqueues.txt")"
 }
 

@@ -174,15 +174,56 @@
           "text": "__QUEUE_GENERAL_NAME__"
         }
       },
+      "SetQueueNameReservations": {
+        "position": {
+          "x": 3040,
+          "y": 560
+        }
+      },
+      "SetQueueNameLoyalty": {
+        "position": {
+          "x": 3040,
+          "y": 760
+        }
+      },
+      "SetQueueNameSecurity": {
+        "position": {
+          "x": 3040,
+          "y": 960
+        }
+      },
+      "SetQueueNameGeneral": {
+        "position": {
+          "x": 3040,
+          "y": 1160
+        }
+      },
+      "SetAgentGuide": {
+        "position": {
+          "x": 3300,
+          "y": 860
+        },
+        "parameters": {
+          "EventHooks": {
+            "DefaultAgentUI": {
+              "displayName": "__AGENT_GUIDE_FLOW_NAME__"
+            }
+          }
+        },
+        "contactFlow": {
+          "text": "__AGENT_GUIDE_FLOW_NAME__",
+          "id": "__AGENT_GUIDE_FLOW_ARN__"
+        }
+      },
       "TransferToAgentQueue": {
         "position": {
-          "x": 3060,
-          "y": 760
+          "x": 3540,
+          "y": 860
         }
       },
       "Disconnect": {
         "position": {
-          "x": 3300,
+          "x": 3540,
           "y": 300
         }
       },
@@ -983,7 +1024,7 @@
         "QueueId": "__QUEUE_RESERVATIONS_ARN__"
       },
       "Transitions": {
-        "NextAction": "TransferToAgentQueue",
+        "NextAction": "SetQueueNameReservations",
         "Errors": [
           {
             "NextAction": "SetQueueGeneral",
@@ -999,7 +1040,7 @@
         "QueueId": "__QUEUE_LOYALTY_ARN__"
       },
       "Transitions": {
-        "NextAction": "TransferToAgentQueue",
+        "NextAction": "SetQueueNameLoyalty",
         "Errors": [
           {
             "NextAction": "SetQueueGeneral",
@@ -1015,7 +1056,7 @@
         "QueueId": "__QUEUE_SECURITY_ARN__"
       },
       "Transitions": {
-        "NextAction": "TransferToAgentQueue",
+        "NextAction": "SetQueueNameSecurity",
         "Errors": [
           {
             "NextAction": "SetQueueGeneral",
@@ -1031,10 +1072,104 @@
         "QueueId": "__QUEUE_GENERAL_ARN__"
       },
       "Transitions": {
-        "NextAction": "TransferToAgentQueue",
+        "NextAction": "SetQueueNameGeneral",
         "Errors": [
           {
             "NextAction": "Disconnect",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "SetQueueNameReservations",
+      "Type": "UpdateContactAttributes",
+      "Parameters": {
+        "TargetContact": "Current",
+        "Attributes": {
+          "queue_name": "__QUEUE_RESERVATIONS_NAME__"
+        }
+      },
+      "Transitions": {
+        "NextAction": "SetAgentGuide",
+        "Errors": [
+          {
+            "NextAction": "SetAgentGuide",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "SetQueueNameLoyalty",
+      "Type": "UpdateContactAttributes",
+      "Parameters": {
+        "TargetContact": "Current",
+        "Attributes": {
+          "queue_name": "__QUEUE_LOYALTY_NAME__"
+        }
+      },
+      "Transitions": {
+        "NextAction": "SetAgentGuide",
+        "Errors": [
+          {
+            "NextAction": "SetAgentGuide",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "SetQueueNameSecurity",
+      "Type": "UpdateContactAttributes",
+      "Parameters": {
+        "TargetContact": "Current",
+        "Attributes": {
+          "queue_name": "__QUEUE_SECURITY_NAME__"
+        }
+      },
+      "Transitions": {
+        "NextAction": "SetAgentGuide",
+        "Errors": [
+          {
+            "NextAction": "SetAgentGuide",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "SetQueueNameGeneral",
+      "Type": "UpdateContactAttributes",
+      "Parameters": {
+        "TargetContact": "Current",
+        "Attributes": {
+          "queue_name": "__QUEUE_GENERAL_NAME__"
+        }
+      },
+      "Transitions": {
+        "NextAction": "SetAgentGuide",
+        "Errors": [
+          {
+            "NextAction": "SetAgentGuide",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "SetAgentGuide",
+      "Type": "UpdateContactEventHooks",
+      "Parameters": {
+        "EventHooks": {
+          "DefaultAgentUI": "__AGENT_GUIDE_FLOW_ARN__"
+        }
+      },
+      "Transitions": {
+        "NextAction": "TransferToAgentQueue",
+        "Errors": [
+          {
+            "NextAction": "TransferToAgentQueue",
             "ErrorType": "NoMatchingError"
           }
         ]

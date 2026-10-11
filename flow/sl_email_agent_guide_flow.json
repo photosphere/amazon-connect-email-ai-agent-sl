@@ -1,0 +1,232 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "ShowAttributes",
+  "Metadata": {
+    "entryPointPosition": {
+      "x": 20,
+      "y": 20
+    },
+    "ActionMetadata": {
+      "ShowAttributes": {
+        "position": {
+          "x": 200,
+          "y": 20
+        }
+      },
+      "EndGuide": {
+        "position": {
+          "x": 520,
+          "y": 260
+        }
+      }
+    },
+    "Annotations": [],
+    "name": "SL-Email-AI-AgentGuide",
+    "description": "Example Hotel Email AI PoC: agent guide (Detail view) showing triage + AI agent contact attributes",
+    "type": "contactFlow",
+    "status": "PUBLISHED"
+  },
+  "Actions": [
+    {
+      "Identifier": "ShowAttributes",
+      "Type": "ShowView",
+      "Parameters": {
+        "ViewResource": {
+          "Id": "__DETAIL_VIEW_ARN__"
+        },
+        "InvocationTimeLimitSeconds": "900",
+        "ViewData": {
+          "Heading": "Email AI PoC - contact attributes",
+          "Description": "Set by the triage Lambda (action=triage) and the AI agent result (action=poll); queue_name is set by the inbound flow when the contact is queued. Empty or none = not set on this path. Refresh re-reads the values.",
+          "AttributeBar": [
+            {
+              "Label": "case_id",
+              "Value": "$.Attributes.case_id"
+            },
+            {
+              "Label": "queue_name",
+              "Value": "$.Attributes.queue_name"
+            },
+            {
+              "Label": "route",
+              "Value": "$.Attributes.route"
+            },
+            {
+              "Label": "ai_mode",
+              "Value": "$.Attributes.ai_mode"
+            },
+            {
+              "Label": "disposition",
+              "Value": "$.Attributes.disposition"
+            },
+            {
+              "Label": "team",
+              "Value": "$.Attributes.team"
+            }
+          ],
+          "Sections": [
+            {
+              "Heading": "Routing and triage (queue_name: inbound flow; rest: triage Lambda, action=triage)",
+              "Columns": 3,
+              "Items": [
+                {
+                  "Label": "queue_name",
+                  "Value": "$.Attributes.queue_name"
+                },
+                {
+                  "Label": "case_id",
+                  "Value": "$.Attributes.case_id"
+                },
+                {
+                  "Label": "email_type",
+                  "Value": "$.Attributes.email_type"
+                },
+                {
+                  "Label": "thread_evidence",
+                  "Value": "$.Attributes.thread_evidence"
+                },
+                {
+                  "Label": "route",
+                  "Value": "$.Attributes.route"
+                },
+                {
+                  "Label": "ai_mode",
+                  "Value": "$.Attributes.ai_mode"
+                },
+                {
+                  "Label": "primary_dcode",
+                  "Value": "$.Attributes.primary_dcode"
+                },
+                {
+                  "Label": "mailbox",
+                  "Value": "$.Attributes.mailbox"
+                },
+                {
+                  "Label": "triage_reason",
+                  "Value": "$.Attributes.triage_reason"
+                }
+              ]
+            },
+            {
+              "Heading": "Classification (AI agent result overrides triage when the AI ran)",
+              "Columns": 3,
+              "Items": [
+                {
+                  "Label": "team",
+                  "Value": "$.Attributes.team"
+                },
+                {
+                  "Label": "language",
+                  "Value": "$.Attributes.language"
+                },
+                {
+                  "Label": "sentiment",
+                  "Value": "$.Attributes.sentiment"
+                },
+                {
+                  "Label": "hotel_code",
+                  "Value": "$.Attributes.hotel_code"
+                },
+                {
+                  "Label": "dcodes",
+                  "Value": "$.Attributes.dcodes"
+                }
+              ]
+            },
+            {
+              "Heading": "AI agent result (action=poll)",
+              "Columns": 3,
+              "Items": [
+                {
+                  "Label": "disposition",
+                  "Value": "$.Attributes.disposition"
+                },
+                {
+                  "Label": "grounding",
+                  "Value": "$.Attributes.grounding"
+                },
+                {
+                  "Label": "actions",
+                  "Value": "$.Attributes.actions"
+                },
+                {
+                  "Label": "ai_reply_sent",
+                  "Value": "$.Attributes.ai_reply_sent"
+                },
+                {
+                  "Label": "escalation_reason",
+                  "Value": "$.Attributes.escalation_reason"
+                },
+                {
+                  "Label": "open_items",
+                  "Value": "$.Attributes.open_items"
+                }
+              ]
+            },
+            {
+              "Heading": "AI summary",
+              "Columns": 1,
+              "Items": [
+                {
+                  "Label": "ai_summary",
+                  "Value": "$.Attributes.ai_summary"
+                }
+              ]
+            },
+            {
+              "Heading": "AI draft reply",
+              "Columns": 1,
+              "Items": [
+                {
+                  "Label": "reply_subject",
+                  "Value": "$.Attributes.reply_subject"
+                },
+                {
+                  "Label": "reply_body",
+                  "Value": "$.Attributes.reply_body"
+                }
+              ]
+            }
+          ],
+          "Actions": [
+            "Refresh"
+          ]
+        }
+      },
+      "Transitions": {
+        "NextAction": "ShowAttributes",
+        "Conditions": [
+          {
+            "NextAction": "ShowAttributes",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "ActionSelected"
+              ]
+            }
+          }
+        ],
+        "Errors": [
+          {
+            "NextAction": "ShowAttributes",
+            "ErrorType": "NoMatchingCondition"
+          },
+          {
+            "NextAction": "ShowAttributes",
+            "ErrorType": "TimeLimitExceeded"
+          },
+          {
+            "NextAction": "EndGuide",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "EndGuide",
+      "Type": "DisconnectParticipant",
+      "Parameters": {},
+      "Transitions": {}
+    }
+  ]
+}
