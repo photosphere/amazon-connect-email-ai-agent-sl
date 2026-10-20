@@ -93,7 +93,7 @@ EMAIL_BUCKET_NAME=<仅在未配置邮件存储时需要> ./deploy_week_1.sh </de
 | 变量 | 默认 | 说明 |
 |---|---|---|
 | `EMAIL_BUCKET_NAME` | 空 | 仅在实例未配置 EMAIL_MESSAGES 时使用 |
-| `CHAT_ORIGIN_SENDERS` | 空 | 聊天离线留言系统的发件地址，逗号分隔 |
+| `CHAT_ORIGIN_SENDERS` | 空 | 聊天离线留言系统的发件地址，逗号分隔。不设置时沿用 Lambda 上已有的值，设为空删除 |
 
 ## 4 周通用
 
@@ -141,15 +141,15 @@ reports/export_reports.py            导出 POC Report 11 项指标 CSV
 | `CONNECT_INSTANCE_ARN` | 交互选择 / `.deploy_settings` | 非交互运行时必填 |
 | `NAME_PREFIX` | `sl` / `.deploy_settings` | 资源命名前缀，见“资源命名” |
 | `ASSUME_YES` | false | 非交互运行时设为 true |
-| `POC_NOW` | 空 | 固定“当前时间”，第 2、3 周的报价 / 下单测试需要 |
+| `POC_NOW` | 空 | 固定“当前时间”，第 2、3 周的报价 / 下单测试需要。不设置时沿用 Lambda 上已有的值，`POC_NOW=`（设为空）删除 |
 | `EMAIL_DOMAIN` | `<实例别名>.email.connect.aws` | |
 | `EMAIL_LOCAL_PARTS` | 6 个邮箱基础名 | 实际地址自动加 `<p>_`；基础名要与 `lambda/data/hotels.json` 的 `mailboxes.rules` 一致 |
 | `BIND_EMAIL_ADDRESSES` | true | false 时不改动邮箱的 flow 绑定 |
 | `QUEUE_GENERAL` / `QUEUE_SECURITY` / `QUEUE_RESERVATIONS` / `QUEUE_LOYALTY` | `<P>-Email-*` | 覆盖派生的队列名 |
 | `ROUTING_PROFILE_NAME` | `<P>-Email-AI-Agents` | 脚本创建，只含 Email 渠道 |
 | `AGENT_USERNAMES` | 空 | 设置后会把这些坐席改用上面的路由配置文件（影响其原有路由） |
-| `TRIAGE_MODEL_ID` / `AGENT_MODEL_ID` | Haiku 4.5 / Sonnet 4.6 | |
-| `GROUNDING_GATE` | true | 回复中有无依据的陈述就转人工审核 |
+| `TRIAGE_MODEL_ID` / `AGENT_MODEL_ID` | Haiku 4.5 / Sonnet 4.6 | 不设置时沿用 Lambda 上已有的值；设为空恢复默认。脚本默认值改了也不会自动用到已部署的 Lambda，需带 `AGENT_MODEL_ID=` / `TRIAGE_MODEL_ID=` 或新值执行一次 |
+| `GROUNDING_GATE` | true | 回复中有无依据的陈述就转人工审核。不设置时沿用 Lambda 上已有的值；设为空恢复默认。脚本默认值改了需带 `GROUNDING_GATE=` 或新值执行一次 |
 | `BEDROCK_KB_ID` | 不设置 | 保留 setup_kb.sh 配置的知识库方式；填 KB ID 或 `none`（本地索引）可强制指定 |
 | `SKIP_SMOKE` | false | 跳过自检 |
 | `ALLOW_DOWNGRADE` | false | 允许在更高周之后执行更早周的脚本 |
@@ -164,6 +164,8 @@ reports/export_reports.py            导出 POC Report 11 项指标 CSV
   - flow 内容逐项比较；
   - 邮箱绑定、坐席的路由配置文件、Lambda 调用权限、队列关联都先检查当前值。
 - **覆盖式写入**：IAM 策略、信任策略、异步重试设置每次写入同样内容，结果不变。
+- **Lambda 环境变量按“未设置就沿用”合并**：`POC_NOW`、`CHAT_ORIGIN_SENDERS`、`TRIAGE_MODEL_ID`、`AGENT_MODEL_ID`、`GROUNDING_GATE` 在 shell 中没有设置时，沿用各 Lambda 上已有的值，日志会列出沿用了哪些；显式设为空（如 `POC_NOW=`）表示删除，有默认值的三个恢复默认。之前的部署已把默认的模型 ID 和 `GROUNDING_GATE=true` 写到 Lambda 上，所以以后修改 deploy_lib.sh 里的默认值不会自动生效，需要带 `AGENT_MODEL_ID=` / `TRIAGE_MODEL_ID=` / `GROUNDING_GATE=`（为空即取脚本默认值）或新值执行一次。表名、周次、能力等由脚本计算的变量每次按脚本写入；在控制台手工添加的其他变量保留不动，需要删除时在控制台操作。
+- **中途失败后补做附加设置**：表的时间点恢复（PITR）每次检查，未开启就开启；已存在的桶只在缺少“阻止公开访问”或默认加密时补上，已有设置（例如 SSE-KMS）不改，部分关闭的“阻止公开访问”只告警。对已存在的表和桶，这些检查或补做因权限不足、限流等失败时只告警、继续部署；本次新建的表和桶仍必须设置成功。
 - **桶 CORS 只追加不覆盖**：只有确认“尚未配置 CORS”时才视为空；读取失败（如无权限）会报错退出，不会覆盖原有规则。
 - **自检数据会清理**：自检写入的数据，包括第 3 周自检生成的测试订单，在脚本结束时（包括中途失败）全部删除。
 - **防止降级**：已部署到第 N 周后，再执行更早周的脚本会报错退出，避免把能力降回去。确实要降级时设置 `ALLOW_DOWNGRADE=true`。

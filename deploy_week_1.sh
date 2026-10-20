@@ -32,8 +32,9 @@ ensure_email_addresses
 
 # 2. Knowledge base (Focus 1) is prepared separately by ./setup_kb.sh; deploy_lambdas checks it exists.
 
-[[ -n "$CHAT_ORIGIN_SENDERS" ]] || warn "CHAT_ORIGIN_SENDERS empty - chat-origin emails are detected by content only."
-[[ -n "$POC_NOW" ]] || warn "POC_NOW empty - dummy inventory (Jul-Oct 2026) is in the past; set it before week 2/3 testing."
+resolve_lambda_env   # unset POC_NOW / CHAT_ORIGIN_SENDERS keep the values already on the Lambdas
+[[ -n "$CHAT_ORIGIN_SENDERS" ]] || warn "CHAT_ORIGIN_SENDERS not set in the shell or on the deployed Lambdas - chat-origin emails are detected by content only."
+[[ -n "$POC_NOW" ]] || warn "POC_NOW not set in the shell or on the deployed Lambdas - dummy inventory (Jul-Oct 2026) is in the past; set it before week 2/3 testing."
 
 # 3. Lambdas (triage + agent) with only the KB capability.
 deploy_lambdas

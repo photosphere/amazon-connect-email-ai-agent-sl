@@ -34,6 +34,9 @@
 #   CHAT_ORIGIN_SENDERS    sender addresses of the live-chat offline-message system (manual handling only)
 #   BEDROCK_KB_ID          normally unset: keeps the knowledge-base mode configured by setup_kb.sh
 #                          (an id = use that Bedrock Knowledge Base, "none" = local BM25 index)
+#   Re-runs: POC_NOW / CHAT_ORIGIN_SENDERS / TRIAGE_MODEL_ID / AGENT_MODEL_ID / GROUNDING_GATE that are NOT set keep the value
+#   already on each Lambda (logged); set one to empty (e.g. POC_NOW=) to remove it - the three with defaults go back to the
+#   default. Other variables added to the Lambdas by hand are kept; TABLE_NAME, POC_WEEK etc. are always set by the script.
 #   SKIP_SMOKE             default false - set true to skip the post-deploy agent self-tests
 
 set -Eeuo pipefail
@@ -43,6 +46,16 @@ EMAIL_LOCAL_PARTS="${EMAIL_LOCAL_PARTS:-reservations,rewards,reservations.pen1,r
 BIND_EMAIL_ADDRESSES="${BIND_EMAIL_ADDRESSES:-true}"
 HOURS_NAME="${HOURS_NAME:-Basic Hours}"
 AGENT_USERNAMES="${AGENT_USERNAMES:-}"
+# R1: optional Lambda env keys. Not set in the shell -> keep the live Lambda's value; set (even empty) -> the shell wins.
+INHERIT_ENV_KEYS="POC_NOW CHAT_ORIGIN_SENDERS TRIAGE_MODEL_ID AGENT_MODEL_ID GROUNDING_GATE"
+ENV_GIVEN=""
+for _k in $INHERIT_ENV_KEYS; do
+  if [[ -n "${!_k+x}" ]]; then ENV_GIVEN="$ENV_GIVEN $_k"; fi
+done
+unset _k
+# Script defaults. Changing one here does NOT reach Lambdas that are already deployed: an unset variable inherits the
+# live value (earlier deploys wrote these defaults to the Lambdas). To apply a new default once, run with
+# AGENT_MODEL_ID= / TRIAGE_MODEL_ID= / GROUNDING_GATE= (empty -> script default) or with the explicit new value.
 TRIAGE_MODEL_ID="${TRIAGE_MODEL_ID:-us.anthropic.claude-haiku-4-5-20251001-v1:0}"
 AGENT_MODEL_ID="${AGENT_MODEL_ID:-us.anthropic.claude-sonnet-4-6}"
 GROUNDING_GATE="${GROUNDING_GATE:-true}"
@@ -183,9 +196,11 @@ pyj() {  # pyj '<python expr over d>' < json
 }
 
 # ---------------------------------------------------------------- data storage
-ensure_bucket() {  # $1 bucket - create private, encrypted bucket in the instance region if absent
+ensure_bucket() {  # $1 bucket - create a private, encrypted bucket if absent; on an existing bucket only add a missing public access block / default encryption
   local b="$1"
-  if "${AWSC[@]}" s3api head-bucket --bucket "$b" --expected-bucket-owner "$ACCOUNT" >/dev/null 2>"$WORK/err"; then return; fi
+  if "${AWSC[@]}" s3api head-bucket --bucket "$b" --expected-bucket-owner "$ACCOUNT" >/dev/null 2>"$WORK/err"; then
+    _bucket_fill_defaults "$b"; return 0
+  fi
   # Create only on "not found"; 403 means the name is taken by another account or we lack access.
   grep -qE "404|Not Found" "$WORK/err" || { cat "$WORK/err" >&2; die "Bucket $b exists but is not accessible from account $ACCOUNT"; }
   log "Creating S3 bucket $b"
@@ -195,6 +210,40 @@ ensure_bucket() {  # $1 bucket - create private, encrypted bucket in the instanc
     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
   "${AWSC[@]}" s3api put-bucket-encryption --bucket "$b" \
     --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
+}
+
+_bucket_fill_defaults() {  # $1 existing bucket (any origin) - fill in only what is missing, never change an existing setting
+  local b="$1" off
+  if "${AWSC[@]}" s3api get-public-access-block --bucket "$b" --expected-bucket-owner "$ACCOUNT" --output json >"$WORK/pab.json" 2>"$WORK/err"; then
+    off="$(python3 -c 'import json,sys; c=json.load(open(sys.argv[1])).get("PublicAccessBlockConfiguration") or {}; print(",".join(k for k in ("BlockPublicAcls","IgnorePublicAcls","BlockPublicPolicy","RestrictPublicBuckets") if c.get(k) is not True))' "$WORK/pab.json")"
+    if [[ -n "$off" ]]; then
+      warn "s3://$b public access block has $off off - left unchanged"
+      note "WARNING: s3://$b public access block has $off off (left unchanged)"
+    fi
+  elif grep -q "NoSuchPublicAccessBlockConfiguration" "$WORK/err"; then
+    log "Adding public access block to existing bucket s3://$b"
+    # Fill-ins on an existing bucket are new behavior: a failure (e.g. AccessDenied) only warns.
+    if ! "${AWSC[@]}" s3api put-public-access-block --bucket "$b" --expected-bucket-owner "$ACCOUNT" \
+        --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true 2>"$WORK/err"; then
+      cat "$WORK/err" >&2; warn "Could not add the public access block to s3://$b - left unchanged"
+      note "WARNING: s3://$b has no public access block (fill-in failed) - check s3:PutBucketPublicAccessBlock permission"
+    fi
+  else
+    cat "$WORK/err" >&2; warn "Cannot read the public access block of s3://$b - left unchanged"
+  fi
+  # Any existing default encryption (SSE-S3, SSE-KMS, DSSE-KMS) is kept as it is: no call at all.
+  if ! "${AWSC[@]}" s3api get-bucket-encryption --bucket "$b" --expected-bucket-owner "$ACCOUNT" --output json >/dev/null 2>"$WORK/err"; then
+    if grep -q "ServerSideEncryptionConfigurationNotFoundError" "$WORK/err"; then
+      log "Adding default encryption (SSE-S3) to existing bucket s3://$b"
+      if ! "${AWSC[@]}" s3api put-bucket-encryption --bucket "$b" --expected-bucket-owner "$ACCOUNT" \
+          --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}' 2>"$WORK/err"; then
+        cat "$WORK/err" >&2; warn "Could not add default encryption (SSE-S3) to s3://$b - left unchanged"
+        note "WARNING: s3://$b has no default encryption (fill-in failed) - check s3:PutEncryptionConfiguration permission"
+      fi
+    else
+      cat "$WORK/err" >&2; warn "Cannot read the default encryption of s3://$b - left unchanged"
+    fi
+  fi
 }
 
 storage_count() {  # $1 resource type
@@ -255,15 +304,40 @@ PY
 
 # ---------------------------------------------------------------- DynamoDB / IAM / Lambda
 ensure_table() {
-  if ! "${AWSC[@]}" dynamodb describe-table --table-name "$TABLE_NAME" >/dev/null 2>&1; then
+  local st pitr created=no
+  if ! st="$("${AWSC[@]}" dynamodb describe-table --table-name "$TABLE_NAME" --query Table.TableStatus --output text 2>/dev/null)"; then
     log "Creating DynamoDB table $TABLE_NAME"
     "${AWSC[@]}" dynamodb create-table --table-name "$TABLE_NAME" \
       --attribute-definitions AttributeName=pk,AttributeType=S AttributeName=sk,AttributeType=S \
       --key-schema AttributeName=pk,KeyType=HASH AttributeName=sk,KeyType=RANGE \
       --billing-mode PAY_PER_REQUEST --sse-specification Enabled=true --tags Key=Project,Value=email-ai-poc >/dev/null
-    "${AWSC[@]}" dynamodb wait table-exists --table-name "$TABLE_NAME"
-    "${AWSC[@]}" dynamodb update-continuous-backups --table-name "$TABLE_NAME" \
-      --point-in-time-recovery-specification PointInTimeRecoveryEnabled=true >/dev/null
+    st=CREATING; created=yes
+  fi
+  if [[ "$st" != ACTIVE ]]; then "${AWSC[@]}" dynamodb wait table-exists --table-name "$TABLE_NAME"; fi
+  # PITR every run: a run interrupted after create-table would otherwise never enable it.
+  # Enabling PITR on a table created in this run must succeed (as before). On an existing table this check is new,
+  # so a failed read / update (missing permission, throttling) only warns and the deploy continues.
+  if ! pitr="$("${AWSC[@]}" dynamodb describe-continuous-backups --table-name "$TABLE_NAME" \
+      --query ContinuousBackupsDescription.PointInTimeRecoveryDescription.PointInTimeRecoveryStatus --output text 2>"$WORK/err")"; then
+    cat "$WORK/err" >&2
+    if [[ "$created" != yes ]]; then
+      warn "Could not verify point-in-time recovery of DynamoDB table $TABLE_NAME - PITR check skipped"
+      note "WARNING: PITR not verified on DynamoDB table $TABLE_NAME (check skipped) - check dynamodb:DescribeContinuousBackups permission"
+      pitr=SKIPPED
+    else
+      pitr=UNKNOWN   # new table: enable it as the original script did, without the read
+    fi
+  fi
+  if [[ "$pitr" != ENABLED && "$pitr" != SKIPPED ]]; then
+    log "Enabling point-in-time recovery on $TABLE_NAME"
+    if [[ "$created" == yes ]]; then
+      "${AWSC[@]}" dynamodb update-continuous-backups --table-name "$TABLE_NAME" \
+        --point-in-time-recovery-specification PointInTimeRecoveryEnabled=true >/dev/null
+    elif ! "${AWSC[@]}" dynamodb update-continuous-backups --table-name "$TABLE_NAME" \
+        --point-in-time-recovery-specification PointInTimeRecoveryEnabled=true >/dev/null 2>"$WORK/err"; then
+      cat "$WORK/err" >&2; warn "Could not enable point-in-time recovery on DynamoDB table $TABLE_NAME - left unchanged"
+      note "WARNING: PITR NOT enabled on DynamoDB table $TABLE_NAME (update failed) - check dynamodb:UpdateContinuousBackups permission"
+    fi
   fi
   TABLE_ARN="$("${AWSC[@]}" dynamodb describe-table --table-name "$TABLE_NAME" --query Table.TableArn --output text)"
 }
@@ -310,19 +384,49 @@ PY
   CODE_SHA="$(python3 -c "import base64,hashlib,sys; print(base64.b64encode(hashlib.sha256(open(sys.argv[1],'rb').read()).digest()).decode())" "$WORK/lambda.zip")"
 }
 
-_env_file() {
-  python3 - "$WORK/env.json" <<PY
+_env_file() {  # $1 live get-function-configuration JSON ("" = new function) $2 function name -> $WORK/env.json
+  # Merge into the function's live environment: keys the script does not manage are kept, INHERIT_ENV_KEYS not set
+  # in the shell keep the live value, empty values are removed. Logs inherited / console-added keys (values only for
+  # the non-sensitive ones).
+  python3 - "$WORK/env.json" "$WORK/env-log.txt" "${1:-}" "$2" "$ENV_GIVEN" "$INHERIT_ENV_KEYS" \
+    GROUNDING_GATE "$GROUNDING_GATE" TABLE_NAME "$TABLE_NAME" TRIAGE_MODEL_ID "$TRIAGE_MODEL_ID" \
+    AGENT_MODEL_ID "$AGENT_MODEL_ID" AGENT_FUNCTION_NAME "$AGENT_FN" CHAT_ORIGIN_SENDERS "$CHAT_ORIGIN_SENDERS" \
+    BEDROCK_KB_ID "$BEDROCK_KB_ID" POC_NOW "$POC_NOW" MAILBOX_PREFIX "$MAILBOX_PREFIX" POC_WEEK "$WEEK" \
+    ENABLED_CAPABILITIES "$CAPABILITIES" <<'PY'
 import json, sys
-env = {"GROUNDING_GATE": "$GROUNDING_GATE", "TABLE_NAME": "$TABLE_NAME", "TRIAGE_MODEL_ID": "$TRIAGE_MODEL_ID",
-       "AGENT_MODEL_ID": "$AGENT_MODEL_ID", "AGENT_FUNCTION_NAME": "$AGENT_FN", "CHAT_ORIGIN_SENDERS": "$CHAT_ORIGIN_SENDERS",
-       "BEDROCK_KB_ID": "$BEDROCK_KB_ID", "POC_NOW": "$POC_NOW", "MAILBOX_PREFIX": "$MAILBOX_PREFIX", "POC_WEEK": "$WEEK", "ENABLED_CAPABILITIES": "$CAPABILITIES"}
-json.dump({"Variables": {k: v for k, v in env.items() if v}}, open(sys.argv[1], "w"))
+out, logf, live_path, fn, given, inherit = sys.argv[1:7]
+pairs = sys.argv[7:]
+script = dict(zip(pairs[0::2], pairs[1::2]))
+given, inherit = set(given.split()), set(inherit.split())
+show = {"POC_NOW", "TRIAGE_MODEL_ID", "AGENT_MODEL_ID", "GROUNDING_GATE"}
+live = ((json.load(open(live_path)).get("Environment") or {}).get("Variables") or {}) if live_path else {}
+env, kept = dict(live), []
+for k, v in script.items():
+    if k in inherit and k not in given and live.get(k):
+        v = live[k]
+        kept.append(f"{k}={v}" if k in show else k)
+    if v:
+        env[k] = v
+    else:
+        env.pop(k, None)
+unmanaged = sorted(k for k in live if k not in script)
+parts = []
+if kept:
+    parts.append("not set in shell, keeping live " + ", ".join(kept))
+if unmanaged:
+    parts.append("keeping console-added keys: " + ", ".join(unmanaged))
+with open(logf, "w") as f:
+    if parts:
+        f.write(f"Lambda {fn}: " + "; ".join(parts))
+json.dump({"Variables": env}, open(out, "w"))
 PY
+  if [[ -s "$WORK/env-log.txt" ]]; then log "$(cat "$WORK/env-log.txt")"; fi
 }
 
 _deploy_fn() {  # name handler timeout memory
   local name="$1" handler="$2" timeout="$3" memory="$4" i
   if "${AWSC[@]}" lambda get-function-configuration --function-name "$name" --output json >"$WORK/fn.json" 2>"$WORK/err"; then
+    _env_file "$WORK/fn.json" "$name"
     if [[ "$(pyj 'd.get("CodeSha256","")' <"$WORK/fn.json")" != "$CODE_SHA" ]]; then
       log "Updating code of Lambda $name"
       "${AWSC[@]}" lambda update-function-code --function-name "$name" --zip-file "fileb://$WORK/lambda.zip" >/dev/null
@@ -345,6 +449,7 @@ PY
     cat "$WORK/err" >&2; die "Cannot read Lambda $name"
   else
     log "Creating Lambda $name"
+    _env_file "" "$name"
     for i in 1 2 3 4 5; do
       if "${AWSC[@]}" lambda create-function --function-name "$name" --runtime python3.12 --handler "$handler" \
           --role "$ROLE_ARN" --zip-file "fileb://$WORK/lambda.zip" --timeout "$timeout" --memory-size "$memory" \
@@ -363,6 +468,21 @@ current_agent_env() {  # $1 variable name -> value on the deployed agent Lambda,
   v="$("${AWSC[@]}" lambda get-function-configuration --function-name "$AGENT_FN" --query "Environment.Variables.$1" --output text 2>/dev/null || true)"
   [[ "$v" == "None" ]] && v=""
   echo "$v"
+}
+
+resolve_lambda_env() {  # once per run: keys in INHERIT_ENV_KEYS not set in the shell take the agent Lambda's live value
+  if [[ "${LAMBDA_ENV_RESOLVED:-}" == yes ]]; then return 0; fi
+  LAMBDA_ENV_RESOLVED=yes
+  local k v
+  if ! "${AWSC[@]}" lambda get-function-configuration --function-name "$AGENT_FN" --output json >"$WORK/live-agent.json" 2>"$WORK/err"; then
+    grep -q "ResourceNotFoundException" "$WORK/err" || { cat "$WORK/err" >&2; die "Cannot read Lambda $AGENT_FN (needed to keep its environment variables)"; }
+    return 0   # first deploy
+  fi
+  for k in $INHERIT_ENV_KEYS; do
+    case " $ENV_GIVEN " in *" $k "*) continue ;; esac
+    v="$(python3 -c 'import json,sys; print(((json.load(open(sys.argv[1])).get("Environment") or {}).get("Variables") or {}).get(sys.argv[2]) or "")' "$WORK/live-agent.json" "$k")"
+    if [[ -n "$v" ]]; then printf -v "$k" '%s' "$v"; fi
+  done
 }
 
 lambda_exists() { "${AWSC[@]}" lambda get-function-configuration --function-name "$1" >/dev/null 2>&1; }
@@ -407,6 +527,7 @@ deploy_lambdas() {  # uses $WEEK and $CAPABILITIES
   if [[ "$dw" -gt "$WEEK" && "${ALLOW_DOWNGRADE:-false}" != "true" ]]; then
     die "The PoC is already at week $dw; re-running week $WEEK would switch capabilities back to $CAPABILITIES. Re-run deploy_week_$dw.sh instead, or set ALLOW_DOWNGRADE=true."
   fi
+  resolve_lambda_env
   if [[ "$BEDROCK_KB_ID_GIVEN" != "yes" ]]; then
     BEDROCK_KB_ID="$(current_agent_env BEDROCK_KB_ID)"
   fi
@@ -420,7 +541,6 @@ deploy_lambdas() {  # uses $WEEK and $CAPABILITIES
   ensure_table
   ensure_role
   build_package
-  _env_file
   _deploy_fn "$AGENT_FN" agent.lambda_handler 300 1024
   # The flow polls one agent run per email; async retries would produce duplicate replies.
   "${AWSC[@]}" lambda put-function-event-invoke-config --function-name "$AGENT_FN" --maximum-retry-attempts 0 >/dev/null
