@@ -17,7 +17,7 @@ import json
 import os
 import re
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import common
 from common import LOGGER, attr, iso, normalize_subject, segment_value, store
@@ -34,7 +34,8 @@ FORWARD_PREFIX_RE = re.compile(r"^\s*(fw|fwd|wg|tr|转发|轉寄|轉發)\s*[:：
 AUTO_SENDER_PATTERNS = ("mailer-daemon", "postmaster", "noreply", "no-reply", "donotreply", "do-not-reply", "bounces+", "bounce+")
 AUTO_SUBJECT_PREFIXES = ("undeliverable:", "mail delivery failed", "delivery status notification", "returned mail",
                          "automatic reply:", "auto:", "out of office", "自动回复", "自動回覆", "退信", "无法投递")
-LOOP_GUARD_MAX = int(os.environ.get("LOOP_GUARD_MAX_REPLIES_PER_HOUR", "5"))
+LOOP_GUARD_MAX = int(os.environ.get("LOOP_GUARD_MAX_REPLIES_PER_HOUR", "50"))  # PoC testing value; production: 5
+LOOP_GUARD_SKEW = timedelta(minutes=5)  # tolerated clock skew for stamps slightly ahead of this Lambda's clock
 AUTO_MARKERS = ("delivery status notification", "undeliverable", "mail delivery subsystem", "mailer-daemon", "automatic reply",
                 "auto-reply", "autoreply", "out of office", "non-delivery report", "returned mail", "auto-submitted:",
                 "自动回复", "自動回覆", "自动答复", "退信", "无法投递", "郵件無法遞送", "不在办公室", "休假中")
@@ -193,6 +194,22 @@ def detect_thread(customer, subject, body, contact_id, thread):
     return "NEW", None, evidence
 
 
+def recent_ai_replies(times, now=None):
+    """Loop guard count: AI replies to the sender in the last real hour (wall clock, not POC_NOW).
+    Stamps further in the future than LOOP_GUARD_SKEW and unparsable values are ignored."""
+    now = now or common.real_now_utc()
+    lo, hi, n = now - timedelta(hours=1), now + LOOP_GUARD_SKEW, 0
+    for t in times or []:
+        try:
+            dt = datetime.fromisoformat(t)
+        except (TypeError, ValueError):
+            continue
+        dt = dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+        if lo <= dt <= hi:
+            n += 1
+    return n
+
+
 def team_for(dcode):
     return TEAM_BY_PREFIX.get((dcode or "OTH").split("-")[0], "GENERAL")
 
@@ -239,8 +256,7 @@ def triage(event, context):
         if duplicate_of != contact_id:  # Lambda retries of the same contact are not duplicates
             route, reason = "DROP", f"same Message-ID already handled as contact {duplicate_of} (sent to several instance addresses)"
     recent = (store().get(f"CUSTOMER#{customer.lower()}", "OPENCASE") or {}).get("ai_reply_times", []) if customer else []
-    cutoff = (common.now_utc() - timedelta(hours=1)).isoformat()
-    if route == "AI" and sum(1 for t in recent if t >= cutoff) >= LOOP_GUARD_MAX:
+    if route == "AI" and recent_ai_replies(recent) >= LOOP_GUARD_MAX:
         route, reason = "HUMAN", f"loop guard: {LOOP_GUARD_MAX}+ AI replies to this sender in the last hour"
     try:
         email = event.get("_local_email") or common.fetch_email(cd)

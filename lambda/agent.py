@@ -319,7 +319,8 @@ def run(payload):
     if disposition == "AUTO_SEND" and payload.get("customer_email"):  # feeds the triage loop guard
         key = f"CUSTOMER#{payload['customer_email'].lower()}"
         rec = st.get(key, "OPENCASE") or {}
-        rec["ai_reply_times"] = (rec.get("ai_reply_times", []) + [finished])[-20:]
+        # Real wall-clock time, not POC_NOW: the loop guard window must expire even when the demo clock is frozen.
+        rec["ai_reply_times"] = (rec.get("ai_reply_times", []) + [iso(common.real_now_utc())])[-20:]
         st.put(key, "OPENCASE", {k: v for k, v in rec.items() if k not in ("pk", "sk")})
 
     meta.update(state=ctx["case_state"], ai_turns=meta.get("ai_turns", 0) + 1, updated_at=finished,

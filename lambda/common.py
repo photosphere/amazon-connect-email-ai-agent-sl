@@ -101,6 +101,13 @@ def now_utc():
     return datetime.now(timezone.utc)
 
 
+def real_now_utc():
+    """Wall-clock UTC, never POC_NOW. now_utc() is BUSINESS time (booking dates, cancellation deadlines);
+    operational safety controls such as the triage loop guard must keep running on real time, otherwise a
+    frozen POC_NOW never lets their windows expire."""
+    return datetime.now(timezone.utc)
+
+
 def iso(dt=None):
     return (dt or now_utc()).isoformat(timespec="seconds")
 

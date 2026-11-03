@@ -2,7 +2,7 @@
 # 说明与本周验收清单：README_week_3.md
 # PoC week 3 - Area 2 write scenarios: create, amend and cancel reservations.
 #
-#   POC_NOW=2026-06-15T10:00:00+08:00 ./deploy_week_3.sh   # 交互确认实例与前缀（默认沿用第 1 周的选择）
+#   POC_NOW=2026-11-15T10:00:00+08:00 ./deploy_week_3.sh   # 交互确认实例与前缀（默认沿用第 1 周的选择）
 #
 # Scenarios enabled (capabilities KB, RSV_READ, RSV_WRITE):
 #   预订：查房 + 下单 + 回顾（Check Available Book）· 改单 · 取消订单（Cancel Booking FIT）
@@ -18,7 +18,7 @@ require_week 2
 ensure_email_storage
 ensure_email_addresses
 resolve_lambda_env
-[[ -n "$POC_NOW" ]] || warn "POC_NOW not set in the shell or on the deployed Lambdas - bookings for Jul-Oct 2026 are rejected as PAST_DATE; the booking self-test is skipped."
+[[ -n "$POC_NOW" ]] || warn "POC_NOW not set in the shell or on the deployed Lambdas - bookings for Dec 2026 - Apr 2027 are rejected as PAST_DATE; the booking self-test is skipped."
 deploy_lambdas
 
 ensure_queue "$QUEUE_GENERAL" reservations
@@ -31,7 +31,7 @@ bind_email_addresses
 # Self-tests. The booking test creates one reservation for guest "Smoke Test" (smoke.test@example.com).
 if [[ -n "$POC_NOW" ]]; then
   smoke "Area 2 booking - create reservation + recap" reservations.hgh1 "Booking request" \
-    "Please book a Garden View Room at Lakeside Hotel Hangzhou, check-in 1 July 2026, check-out 3 July 2026, 2 adults, no children, 1 room, flexible rate. Guest name: Mr. Smoke Test. Thank you." \
+    "Please book a Garden View Room at Lakeside Hotel Hangzhou, check-in 1 December 2026, check-out 3 December 2026, 2 adults, no children, 1 room, flexible rate. Guest name: Mr. Smoke Test. Thank you." \
     '"CREATE_RESERVATION" in actions'
 fi
 smoke "Example Rewards not enabled yet -> escalate" rewards "Points" \

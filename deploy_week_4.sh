@@ -3,7 +3,7 @@
 # PoC week 4 - Focus 3 (Example Rewards Account), Focus 4 (Earn & Redeem), Focus 5 (Report Generation)
 # + full regression.
 #
-#   POC_NOW=2026-06-15T10:00:00+08:00 ./deploy_week_4.sh   # 交互确认实例与前缀（默认沿用第 1 周的选择）
+#   POC_NOW=2026-11-15T10:00:00+08:00 ./deploy_week_4.sh   # 交互确认实例与前缀（默认沿用第 1 周的选择）
 #
 # Scenarios enabled (all capabilities KB, RSV_READ, RSV_WRITE, LOYALTY):
 #   示例会员俱乐部账户（3 项身份验证 + 风险分级）· 积分赚取与兑换（Cash & Points）· 报表导出（POC Report 11 项）

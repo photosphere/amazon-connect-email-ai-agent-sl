@@ -30,7 +30,7 @@
 #   TRIAGE_MODEL_ID        default us.anthropic.claude-haiku-4-5-20251001-v1:0
 #   AGENT_MODEL_ID         default us.anthropic.claude-sonnet-4-6
 #   GROUNDING_GATE         default true
-#   POC_NOW                fixed "now" for demos, e.g. 2026-06-15T10:00:00+08:00 (dummy inventory is Jul-Oct 2026)
+#   POC_NOW                fixed "now" for demos, e.g. 2026-11-15T10:00:00+08:00 (dummy inventory is Dec 2026 - 2 Apr 2027)
 #   CHAT_ORIGIN_SENDERS    sender addresses of the live-chat offline-message system (manual handling only)
 #   BEDROCK_KB_ID          normally unset: keeps the knowledge-base mode configured by setup_kb.sh
 #                          (an id = use that Bedrock Knowledge Base, "none" = local BM25 index)

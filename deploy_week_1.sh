@@ -6,7 +6,7 @@
 #
 #   非交互：CONNECT_INSTANCE_ARN=arn:aws:connect:<region>:<acct>:instance/<id> NAME_PREFIX=sl ASSUME_YES=true \
 #           EMAIL_BUCKET_NAME=<only if EMAIL_MESSAGES storage is not configured yet> \
-#           POC_NOW=2026-06-15T10:00:00+08:00 ./deploy_week_1.sh </dev/null
+#           POC_NOW=2026-11-15T10:00:00+08:00 ./deploy_week_1.sh </dev/null
 #
 # 前缀 sl 时：Lambda sl-email-ai-*、表 sl-email-ai-poc、flow SL-Email-AI-Inbound、队列 SL-Email-*、
 # 邮箱 sl_reservations@ / sl_rewards@ / sl_reservations.pen1@ / sl_reservations.pen2@ / sl_reservations.szx1@ / sl_reservations.hgh1@。
@@ -34,7 +34,7 @@ ensure_email_addresses
 
 resolve_lambda_env   # unset POC_NOW / CHAT_ORIGIN_SENDERS keep the values already on the Lambdas
 [[ -n "$CHAT_ORIGIN_SENDERS" ]] || warn "CHAT_ORIGIN_SENDERS not set in the shell or on the deployed Lambdas - chat-origin emails are detected by content only."
-[[ -n "$POC_NOW" ]] || warn "POC_NOW not set in the shell or on the deployed Lambdas - dummy inventory (Jul-Oct 2026) is in the past; set it before week 2/3 testing."
+[[ -n "$POC_NOW" ]] || warn "POC_NOW not set in the shell or on the deployed Lambdas - dummy inventory (Dec 2026 - Apr 2027) is in the past; set it before week 2/3 testing."
 
 # 3. Lambdas (triage + agent) with only the KB capability.
 deploy_lambdas
@@ -55,7 +55,7 @@ smoke "Focus 1 - pool hours (KB answer)" reservations.hgh1 "Swimming pool" \
 smoke "Traditional Chinese reply" reservations.szx1 "健身房開放時間" "請問深圳福田城市酒店的健身房開放時間是幾點？謝謝。" \
   '(r.get("attributes") or {}).get("language") == "zh-TW"'
 smoke "Area 2 not enabled yet -> escalate" reservations "Lakeview room rate" \
-  "Hi, can you quote me the rate for Lakeview room at Lakeside Hotel? Check in 1 July 2026 for 2 nights, 2 adults. Thanks" \
+  "Hi, can you quote me the rate for Lakeview room at Lakeside Hotel? Check in 1 December 2026 for 2 nights, 2 adults. Thanks" \
   'disp == "ESCALATE" and "check_availability" not in tools'
 
 finish "  酒店基础信息问答 (Focus 1) · 新邮件/回复识别 · 安全防护与防回环 · 聊天转邮件转人工 · 三语 · 多邮箱签名" \
