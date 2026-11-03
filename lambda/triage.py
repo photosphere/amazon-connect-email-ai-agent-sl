@@ -26,8 +26,11 @@ from prompts import DCODES, TEAM_BY_PREFIX, TRIAGE_SYSTEM
 HOTELS = common.load_json("hotels.json")
 REF_RE = re.compile(r"\[Ref:\s*(EA-[A-Z0-9]{6,12})\]", re.I)
 REPLY_PREFIX_RE = re.compile(r"^\s*(re|aw|sv|antw|回复|回覆|答复|答覆)\s*[:：]", re.I)
-QUOTE_MARKERS = [r"^On .{5,80} wrote:\s*$", r"^-{2,}\s*Original Message\s*-{2,}", r"^From:\s.+\nSent:\s", r"^发件人[:：]", r"^寄件者[:：]",
-                 r"^在.{2,60}写道[:：]", r"^於.{2,60}寫道[:：]", r"^>{1,}\s"]
+# Reply headers: Gmail/Apple "On <date> <name> wrote:", NetEase 163/126 "At <date>, <name> wrote: >quoted..." (plain-text
+# part puts the whole quote on that same line), long sender addresses, and "wrote:" wrapped onto the next line.
+# A digit (the date) is required so a guest sentence such as "At the desk my friend wrote: ..." is not cut.
+QUOTE_MARKERS = [r"^(On|At)\s[^\n]{0,120}?\d[^\n]{0,200}?(\n[^\n]{0,200}?)?\s+wrote:", r"^-{2,}\s*Original Message\s*-{2,}", r"^From:\s.+\nSent:\s",
+                 r"^发件人[:：]", r"^寄件者[:：]", r"^在[^\n]{2,200}?写道[:：]", r"^於[^\n]{2,200}?寫道[:：]", r"^>{1,}\s"]
 FORWARD_PREFIX_RE = re.compile(r"^\s*(fw|fwd|wg|tr|转发|轉寄|轉發)\s*[:：]", re.I)
 # "Handling email loops": Connect does not suppress NDR / out-of-office mail. Sender patterns and bounce subject
 # prefixes recommended by the doc (the flow applies the same filter before invoking this Lambda).
@@ -285,7 +288,10 @@ def triage(event, context):
     signals = phishing_signals(email.get("links", []), email.get("attachments", []), latest)
     if route == "AI" and (cls.get("phishing_suspected") and signals or len(signals) >= 2):
         route, reason = "SECURITY", "possible phishing: " + "; ".join(signals[:3] or [cls.get("phishing_reason", "")])
-    if route == "AI" and cls.get("is_chat_transcript"):
+    # Classifier verdict only for emails not linked to an existing case: a reply in a thread this PoC started by email
+    # did not originate from live chat (Req. 2), even if its quoted history reads like a back-and-forth conversation.
+    # Sender list and chat markers above still apply to every email.
+    if route == "AI" and cls.get("is_chat_transcript") and not case_id:
         route, reason = "HUMAN", "email originated from live chat - manual handling only (Req. 2)"
     if route == "AI" and cls.get("is_auto_reply"):
         route, reason = "DROP", "auto-reply detected by classifier"

@@ -61,6 +61,7 @@ Mandatory to book: hotel name, check-in & check-out dates, guest name, occupancy
 - Missing mandatory info -> ask for exactly what is missing (a short list), do not book. Children without ages -> ask ages (12 years and above count as adults).
 - Occupancy above the room's maximum -> say so and recommend an additional room (e.g. Lakeview Room max 2 adults 1 child or 1 adult 2 children).
 - Room not available / fully booked / minimum stay not met -> explain and offer alternatives within the tool result.
+- Describing a room type you quote or recommend (view, size, bed, features): only from a search_knowledge_base passage for that exact room type - search for it by name first. Without such a passage give only its name and the tool data; never infer a description from an adjacent room or a similar name.
 - The guest asks to book with all mandatory info -> create_reservation, then recap: hotel name, confirmation number(s), guest name, travelling dates, room types, total rate inclusive of taxes (from the tool). Mention the guarantee/prepayment next step from the tool, and that special requests are noted and subject to availability. Default rate plan FLEX (Flexible Rate) when the guest did not choose.
 - Quotation / "not decided yet" -> quote from check_availability (room types, rate plans, rates, cancellation policy), state clearly that no reservation has been made, and list the details needed to book.
 - Upsell: while quoting may offer airport transfer, room decoration for special occasions (birthday, anniversary, honeymoon), room upgrade. After a booking: airport transfer, spa, F&B. Offer airport transfer only if the guest travels by flight (or ask for flight details).
@@ -133,6 +134,7 @@ JUDGE_SYSTEM = """You audit an AI-written hotel email reply for factual groundin
 List every factual claim in the reply (times, prices, locations, policies, availability, booking data, benefits, numbers). Greetings, empathy and requests for information are not claims.
 EVIDENCE includes the SOP rules the assistant must follow, the hotel directory, the guest's own email, and every tool result.
 A claim is SUPPORTED if the evidence states it or it follows directly from it: paraphrase, translation, unit/format changes (14:00 = 2:00 pm), date-range notation, simple arithmetic and logically equivalent restatements (e.g. "a charge applies to cancellations after 18:00" supports "free cancellation until 18:00"). Restating what the guest wrote is supported.
+An official room-type, rate-plan or hotel name that appears in the evidence is evidence of what the name itself states: "Romance Room, Lakeview" supports "Romance Room, Lakeview has a lake view"; "Garden View Room" supports "garden view". Details the name does not state (e.g. "180-degree", "mountain view", size, balcony) still need a passage for that same room.
 A claim is UNSUPPORTED only if it is absent from, or contradicts, the evidence. Omissions are not claims.
 Return ONLY JSON:
 {"claims":[{"claim":"...","verdict":"SUPPORTED|UNSUPPORTED","why":"<=20 words, only for UNSUPPORTED"}]}"""
