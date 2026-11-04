@@ -19,7 +19,7 @@
 ## 前置条件
 
 - 第 1 周已执行（脚本检测到未执行会给出提醒，并补做基础配置）。
-- 首次部署时 `POC_NOW` 已设置为 2026 年 7 月之前，否则 7–10 月的报价会被当作过去日期。重跑时不设置会沿用 Lambda 上的值；设为空（`POC_NOW=`）会删除它。
+- 首次部署时 `POC_NOW` 已设置为 2026 年 12 月之前，否则 2026 年 12 月至 2027 年 4 月的报价会被当作过去日期。重跑时不设置会沿用 Lambda 上的值；设为空（`POC_NOW=`）会删除它。
 - 使用的数据已打包在 Lambda 里：
   - `lambda/data/hotels.json`：POC Testing Data 第 7–10 行的库存与房价；
   - `lambda/data/seed_data.json`：种子订单 12345678910、12345678909 等。
@@ -28,7 +28,7 @@
 
 ```bash
 export CONNECT_INSTANCE_ARN='arn:aws:connect:us-west-2:<acct>:instance/<id>'
-export POC_NOW='2026-06-15T10:00:00+08:00'
+export POC_NOW='2026-11-15T10:00:00+08:00'
 ./deploy_week_2.sh
 ```
 

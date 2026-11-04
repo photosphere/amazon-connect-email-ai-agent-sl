@@ -29,7 +29,7 @@ Example Hotel Email AI PoC：Amazon Connect Email 渠道，flow 中的 Lambda �
 ## 执行
 
 ```bash
-export POC_NOW='2026-06-15T10:00:00+08:00'     # 假数据库存是 2026 年 7–10 月，演示时固定“当前时间”
+export POC_NOW='2026-11-15T10:00:00+08:00'     # 假数据库存是 2026 年 12 月至 2027 年 4 月 2 日，演示时固定“当前时间”
 ./deploy_week_1.sh
 ```
 

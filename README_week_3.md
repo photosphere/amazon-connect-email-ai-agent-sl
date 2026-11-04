@@ -17,7 +17,7 @@
 ## 前置条件
 
 - 第 1、2 周已执行。
-- `POC_NOW` 已设置为 2026 年 7 月之前（重跑时不设置会沿用 Lambda 上的值）；shell 和 Lambda 上都没有时，下单自检会被跳过。
+- `POC_NOW` 已设置为 2026 年 12 月之前（重跑时不设置会沿用 Lambda 上的值）；shell 和 Lambda 上都没有时，下单自检会被跳过。
 - 确认取消政策、罚金规则、取消函模板与 POC Testing Data 一致：
   - Flexible Rate：到店前一日 18:00 后取消，收一晚房费；
   - Advance Purchase：不退款、不可修改。
@@ -26,7 +26,7 @@
 
 ```bash
 export CONNECT_INSTANCE_ARN='arn:aws:connect:us-west-2:<acct>:instance/<id>'
-export POC_NOW='2026-06-15T10:00:00+08:00'
+export POC_NOW='2026-11-15T10:00:00+08:00'
 ./deploy_week_3.sh
 ```
 
